@@ -1,0 +1,47 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+*.d
+Debug/LTE-Sim
+LTE-Sim
+TOOLS/make_avg
+TOOLS/make_cdf
+TOOLS/make_cell_spectral_efficiency
+TOOLS/make_fairness_index
+TOOLS/make_goodput
+TOOLS/make_gput
+TOOLS/make_plr
+TOOLS/make_sum
+.vscode
+*.log
+*.error
+*.png
+*.backup
+
+build
