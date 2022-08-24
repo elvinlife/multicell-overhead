@@ -24,8 +24,8 @@ double SINRForCQIIndex[15] = {
     14.24, 15.21, 18.63, 21.32, 23.47, 28.49, 34.6
 };
 
-int get_cqi_from_sinr(float sinr) {
-  int cqi = 1;
+uint8_t get_cqi_from_sinr(float sinr) {
+  uint8_t cqi = 1;
   while (SINRForCQIIndex[cqi] <= sinr && cqi <= 14) {
     cqi++;
   }

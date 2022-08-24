@@ -1,12 +1,13 @@
 #ifndef UE_CONTEXT_H_
 #define UE_CONTEXT_H_
 
-#define MAX_SLICES 100
+#define MAX_SLICES 20
 #define MAX_TRACE_TTIS 500
 #define NB_RBGS 62
 #define NB_RBS 496
 #define RBS_PER_RBG 8
 
+#include <cstdint>
 #include <vector>
 using std::vector;
 
@@ -19,8 +20,8 @@ class ueContext
     int             ue_id_;
     int             trace_ttis_;
     float           ewma_throughput_;
-    int             subband_cqis_[NB_RBGS];
-    int             subband_cqis_trace_[MAX_TRACE_TTIS][NB_RBGS];
+    uint8_t         subband_cqis_[NB_RBGS];
+    uint8_t         subband_cqis_trace_[MAX_TRACE_TTIS][NB_RBGS];
     float           sched_metrics_[NB_RBGS];
     vector<int>     rbgs_allocated_;
 
@@ -40,7 +41,7 @@ class ueContext
     }
 
     // return the user CQI of this rbg
-    inline int getCQI(int rbg_id) {return subband_cqis_[rbg_id];}
+    inline uint8_t getCQI(int rbg_id) {return subband_cqis_[rbg_id];}
 
     inline int getUserID() { return ue_id_; }
 

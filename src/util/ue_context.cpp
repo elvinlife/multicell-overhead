@@ -25,7 +25,7 @@ ueContext::ueContext(int ue_id, int trace_id)
     for (int i = 0; i < NB_RBS; ++i) {
       iss >> cqi;
       if (i % RBS_PER_RBG == 0) {
-        subband_cqis_trace_[trace_ttis_][i / RBS_PER_RBG] = cqi;
+        subband_cqis_trace_[trace_ttis_][i / RBS_PER_RBG] = (uint8_t)cqi;
       }
     }
     trace_ttis_ += 1;
@@ -39,7 +39,8 @@ ueContext::~ueContext() {
 void ueContext::updateThroughput(unsigned int tti) {
   // periodically cqi report
   if (tti % cqi_report_period_ == 0) {
-    memcpy(subband_cqis_, subband_cqis_trace_[tti % trace_ttis_], sizeof(int) * NB_RBGS);
+    memcpy(subband_cqis_, subband_cqis_trace_[tti % trace_ttis_],\
+        sizeof(uint8_t) * NB_RBGS);
   }
   if (rbgs_allocated_.size() == 0) {
     ewma_throughput_ = (1-beta_) * ewma_throughput_;

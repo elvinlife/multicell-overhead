@@ -2,26 +2,31 @@
 #define CONTEXT_H_
 #include "ue_context.h"
 #include "slice_context.h"
+#include <cstdint>
 
 class schedulerContext
 {
-  public:
+private:
     const int     nb_slices_;
     const int     ues_per_slice_;
-    sliceContext  *slices_[MAX_SLICES];
     ueContext     **slice_user_[NB_RBGS];
-    int           *slice_cqi_[NB_RBGS];
+    uint8_t       *slice_cqi_[NB_RBGS];
     bool          is_rbg_allocated_[NB_RBGS];
-    int           slice_rbgs_quota[MAX_SLICES];
-    float         slice_rbgs_share[MAX_SLICES];
-    float         slice_rbgs_offset[MAX_SLICES];
-
-    schedulerContext(int nb_slices, int ues_per_slice);
-    ~schedulerContext();
-
-    void newTTI(unsigned int tti);
+    sliceContext  *slices_[MAX_SLICES];
+    int8_t        slice_rbgs_allocated_[MAX_SLICES];
+    int8_t        slice_rbgs_quota_[MAX_SLICES];
+    float         slice_rbgs_share_[MAX_SLICES];
+    float         slice_rbgs_offset_[MAX_SLICES];
     void calculateRBGsQuota();
     void maxcellInterSchedule();
+    void sequentialInterSchedule();
+
+public:
+    int         total_time_enterprise_;
+    int         total_time_interslice_;
+    schedulerContext(int nb_slices, int ues_per_slice);
+    ~schedulerContext();
+    void newTTI(unsigned int tti);
 };
 
 #endif

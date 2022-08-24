@@ -5,7 +5,7 @@
 #include <iostream>
 
 int main() {
-  schedulerContext scheduler(10, 10);
+  schedulerContext scheduler(10, 20);
   int global_tti = 0;
   int total_tti = 10000;
   auto start = std::chrono::high_resolution_clock::now();
@@ -18,4 +18,8 @@ int main() {
   long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(
         elapsed).count();
   std::cout << "avg_time(us): " << microseconds / total_tti << std::endl;
+  std::cout << "enterprise_time(us): " \
+      << scheduler.total_time_enterprise_ / total_tti << std::endl;
+  std::cout << "interslice_time(us): " \
+      << scheduler.total_time_interslice_ / total_tti << std::endl;
 }

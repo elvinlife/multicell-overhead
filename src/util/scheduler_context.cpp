@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <fstream>
 #include <sstream>
+#include <chrono>
 
 schedulerContext::schedulerContext(int nb_slices, int ues_per_slice)
   :nb_slices_(nb_slices), ues_per_slice_(ues_per_slice) {
@@ -29,8 +30,11 @@ schedulerContext::schedulerContext(int nb_slices, int ues_per_slice)
   }
   for (int i = 0; i < NB_RBGS; ++i) {
     slice_user_[i] = new ueContext* [nb_slices_];
-    slice_cqi_[i] = new int[nb_slices_];
+    slice_cqi_[i] = new uint8_t[nb_slices_];
   }
+
+  total_time_enterprise_ = 0;
+  total_time_interslice_ = 0;
 }
 
 schedulerContext::~schedulerContext() {
@@ -44,40 +48,79 @@ schedulerContext::~schedulerContext() {
 }
 
 void schedulerContext::newTTI(unsigned int tti) {
+  auto t1 = std::chrono::high_resolution_clock::now();
   fprintf(stderr, "newTTI(%u) inter-slice scheduler\n", tti);
   for (int i = 0; i < nb_slices_; ++i) {
     slices_[i]->newTTI(tti);
   }
   calculateRBGsQuota();
-  maxcellInterSchedule();
+  auto t2 = std::chrono::high_resolution_clock::now();
+  //maxcellInterSchedule();
+  sequentialInterSchedule();
+  auto t3 = std::chrono::high_resolution_clock::now();
+  total_time_enterprise_ += std::chrono::duration_cast<std::chrono::microseconds>(
+        t2 - t1).count();
+  total_time_interslice_ += std::chrono::duration_cast<std::chrono::microseconds>(
+        t3 - t2).count();
 }
 
 void schedulerContext::calculateRBGsQuota() {
   int extra_rbgs = NB_RBGS;
   for (int i = 0; i < nb_slices_; i++) {
-    slice_rbgs_share[i] = slices_[i]->getWeight() * NB_RBGS \
-        + slice_rbgs_offset[i];
-    slice_rbgs_quota[i] = std::floor(slice_rbgs_share[i]);
-    extra_rbgs -= slice_rbgs_quota[i];
+    slice_rbgs_share_[i] = slices_[i]->getWeight() * NB_RBGS \
+        + slice_rbgs_offset_[i];
+    slice_rbgs_quota_[i] = std::floor(slice_rbgs_share_[i]);
+    extra_rbgs -= slice_rbgs_quota_[i];
   }
   int rand_begin_idx = rand();
   bool is_first_slice = true;
   for (int i = 0; i < nb_slices_; i++) {
     int k = (i + rand_begin_idx) % nb_slices_;
-    slice_rbgs_quota[k] += extra_rbgs / nb_slices_;
+    slice_rbgs_quota_[k] += extra_rbgs / nb_slices_;
     if (is_first_slice) {
-      slice_rbgs_quota[k] += extra_rbgs % nb_slices_;
+      slice_rbgs_quota_[k] += extra_rbgs % nb_slices_;
       is_first_slice = false;
     }
   }
   for (int i = 0; i < nb_slices_; i++) {
-    slice_rbgs_offset[i] = slice_rbgs_share[i] - slice_rbgs_quota[i];
+    slice_rbgs_offset_[i] = slice_rbgs_share_[i] - slice_rbgs_quota_[i];
   }
 
   for (int i = 0; i < nb_slices_; i++) {
-    fprintf(stderr, "%d(%d); ", i, slice_rbgs_quota[i]);
+    fprintf(stderr, "%d(%u); ", i, slice_rbgs_quota_[i]);
   }
   fprintf(stderr, "\n");
+}
+
+void schedulerContext::sequentialInterSchedule() {
+  for (int i = 0; i < NB_RBGS; i++) {
+    for (int j = 0; j < nb_slices_; j++) {
+      ueContext* ue = slices_[j]->enterpriseSchedule(i);
+      slice_cqi_[i][j] = ue->getCQI(i);
+      slice_user_[i][j] = ue;
+    }
+  }
+  memset(slice_rbgs_allocated_, 0, nb_slices_ * sizeof(int8_t));
+  memset(is_rbg_allocated_, 0, NB_RBGS * sizeof(bool));
+
+  for (int rbgid = 0; rbgid < NB_RBGS; rbgid++) {
+    uint8_t max_cqi = 0;
+    int max_rbgid = -1, max_sliceid = -1;
+    for (int sliceid = 0; sliceid < nb_slices_; sliceid++) {
+      if (slice_rbgs_allocated_[sliceid] >= slice_rbgs_quota_[sliceid])
+          continue;
+      if (slice_cqi_[rbgid][sliceid] > max_cqi) {
+        max_cqi = slice_cqi_[rbgid][sliceid];
+        max_rbgid = rbgid;
+        max_sliceid = sliceid;
+      }
+    }
+    assert(max_rbgid != -1);
+    ueContext* ue = slice_user_[max_rbgid][max_sliceid];
+    is_rbg_allocated_[max_rbgid] = true;
+    ue->allocateRBG(max_rbgid);
+    slice_rbgs_allocated_[max_sliceid] += 1;
+  }
 }
 
 void schedulerContext::maxcellInterSchedule() {
@@ -86,22 +129,22 @@ void schedulerContext::maxcellInterSchedule() {
       ueContext* ue = slices_[j]->enterpriseSchedule(i);
       slice_cqi_[i][j] = ue->getCQI(i);
       slice_user_[i][j] = ue;
-      assert(slice_cqi_[i][j] >= 1);
     }
   }
 
-  vector<int> slice_rbgs_allocated(nb_slices_, 0);
+  memset(slice_rbgs_allocated_, 0, nb_slices_ * sizeof(uint8_t));
   memset(is_rbg_allocated_, 0, NB_RBGS * sizeof(bool));
   
   for (int k = 0; k < NB_RBGS; k++) {
-    int max_cqi = -1, max_rbgid = -1, max_sliceid = -1;
+    uint8_t max_cqi = 0;
+    int max_rbgid = -1, max_sliceid = -1;
     for (int rbgid = 0; rbgid < NB_RBGS; rbgid++ ) {
       // the rbg has been allocated
       if (is_rbg_allocated_[rbgid])
         continue;
       for (int sliceid = 0; sliceid < nb_slices_; sliceid++) {
         // the slice has been allocated quota rbgs
-        if (slice_rbgs_allocated[sliceid] >= slice_rbgs_quota[sliceid])
+        if (slice_rbgs_allocated_[sliceid] >= slice_rbgs_quota_[sliceid])
           continue;
         if (slice_cqi_[rbgid][sliceid] > max_cqi) {
           max_cqi = slice_cqi_[rbgid][sliceid];
@@ -118,7 +161,7 @@ void schedulerContext::maxcellInterSchedule() {
     
     is_rbg_allocated_[max_rbgid] = true;
     ue->allocateRBG(max_rbgid);
-    slice_rbgs_allocated[max_sliceid] += 1;
+    slice_rbgs_allocated_[max_sliceid] += 1;
 
     // recomputation
     // if (slice_rbgs_allocated[max_sliceid] >= slice_rbgs_quota[max_sliceid])
