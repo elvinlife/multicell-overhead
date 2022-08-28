@@ -6,8 +6,8 @@
 using std::vector;
 
 void test_effective_sinr(){
-  vector<float> rbgs_sinrs{7.53, 7.53, 7.53};
-  float effective_sinr = get_effective_sinr(rbgs_sinrs);
+  vector<double> rbgs_sinrs{7.53, 7.53, 7.53};
+  double effective_sinr = get_effective_sinr(rbgs_sinrs);
   std::cerr << "effective_sinr: " << effective_sinr << std::endl;
   int mcs = get_mcs_from_cqi(get_cqi_from_sinr(effective_sinr));
   // cqi = 6

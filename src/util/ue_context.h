@@ -13,16 +13,16 @@ using std::vector;
 
 class ueContext
 {
-  static float beta_;
+  static double beta_;
   static int cqi_report_period_;
   
   private:
     int             ue_id_;
     int             trace_ttis_;
-    float           ewma_throughput_;
+    double          ewma_throughput_;
     uint8_t         subband_cqis_[NB_RBGS];
     uint8_t         subband_cqis_trace_[MAX_TRACE_TTIS][NB_RBGS];
-    float           sched_metrics_[NB_RBGS];
+    double          sched_metrics_[NB_RBGS];
     vector<int>     rbgs_allocated_;
 
   public:
@@ -46,7 +46,7 @@ class ueContext
     inline int getUserID() { return ue_id_; }
 
     // get the user metric of this rbg(without compute)
-    inline float getRankingMetric(int rbg_id) {
+    inline double getRankingMetric(int rbg_id) {
       return sched_metrics_[rbg_id];
     }
 };

@@ -9,7 +9,7 @@
 using std::string;
 
 // function definition of ueContext
-float ueContext::beta_ = 0.01;
+double ueContext::beta_ = 0.01;
 int ueContext::cqi_report_period_ = 40;
 
 ueContext::ueContext(int ue_id, int trace_id)
@@ -46,13 +46,13 @@ void ueContext::updateThroughput(unsigned int tti) {
     ewma_throughput_ = (1-beta_) * ewma_throughput_;
   }
   else {
-    vector<float> rbgs_sinrs;
+    vector<double> rbgs_sinrs;
     for (size_t i = 0; i < rbgs_allocated_.size(); i++) {
       rbgs_sinrs.push_back(get_sinr_from_cqi(
         subband_cqis_[rbgs_allocated_[i]]
       ));
     }
-    float effective_sinr = get_effective_sinr(rbgs_sinrs);
+    double effective_sinr = get_effective_sinr(rbgs_sinrs);
     int mcs = get_mcs_from_cqi(get_cqi_from_sinr(effective_sinr));
     int throughput = get_tbs_from_mcs(mcs, rbgs_allocated_.size());
     ewma_throughput_ = beta_ * throughput + (1-beta_) * ewma_throughput_;

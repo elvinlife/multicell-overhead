@@ -24,15 +24,15 @@ double SINRForCQIIndex[15] = {
     14.24, 15.21, 18.63, 21.32, 23.47, 28.49, 34.6
 };
 
-uint8_t get_cqi_from_sinr(float sinr) {
+uint8_t get_cqi_from_sinr(double sinr) {
   uint8_t cqi = 1;
-  while (SINRForCQIIndex[cqi] <= sinr && cqi <= 14) {
+  while (cqi <= 14 && SINRForCQIIndex[cqi] <= sinr) {
     cqi++;
   }
   return cqi;
 }
 
-float get_effective_sinr(std::vector<float>& sinrs) {
+double get_effective_sinr(std::vector<double>& sinrs) {
   assert(sinrs.size() > 0);
   double eff_sinr;
   double sum_I_sinr = 0;

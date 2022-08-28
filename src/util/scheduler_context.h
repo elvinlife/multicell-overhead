@@ -15,9 +15,11 @@ private:
     sliceContext  *slices_[MAX_SLICES];
     int8_t        slice_rbgs_allocated_[MAX_SLICES];
     int8_t        slice_rbgs_quota_[MAX_SLICES];
-    float         slice_rbgs_share_[MAX_SLICES];
-    float         slice_rbgs_offset_[MAX_SLICES];
+    double        slice_rbgs_share_[MAX_SLICES];
+    double        slice_rbgs_offset_[MAX_SLICES];
+
     void calculateRBGsQuota();
+    void runEnterpriseSchedule(int rbg_id, int slice_id);
     void maxcellInterSchedule();
     void sequentialInterSchedule();
 

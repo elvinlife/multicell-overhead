@@ -1,7 +1,7 @@
 #include "slice_context.h"
 
-sliceContext::sliceContext(int slice_id, float weight)
- : weight_(weight), slice_id_(slice_id) {
+sliceContext::sliceContext(int slice_id, double weight)
+ : slice_id_(slice_id), weight_(weight) {
 }
 
 sliceContext::~sliceContext() {
@@ -27,9 +27,9 @@ void sliceContext::newTTI(unsigned int tti) {
 
 ueContext* sliceContext::enterpriseSchedule(int rbg_id) {
   ueContext* ue = NULL;
-  float metric_max = -1;
+  double metric_max = -1;
   for (auto it = ue_ctxs_.begin(); it != ue_ctxs_.end(); ++it) {
-    float metric = it->second->getRankingMetric( rbg_id );
+    double metric = it->second->getRankingMetric( rbg_id );
     if ( metric > metric_max ) {
       metric_max = metric;
       ue = it->second;

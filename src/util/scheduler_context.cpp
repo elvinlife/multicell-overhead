@@ -62,6 +62,13 @@ void schedulerContext::newTTI(unsigned int tti) {
         t2 - t1).count();
   total_time_interslice_ += std::chrono::duration_cast<std::chrono::microseconds>(
         t3 - t2).count();
+
+  // for (int i = 0; i < nb_slices_; ++i) {
+  //   slices_[i]->newTTI(tti);
+  // }
+  // calculateRBGsQuota();
+  // //maxcellInterSchedule();
+  // sequentialInterSchedule();
 }
 
 void schedulerContext::calculateRBGsQuota() {
@@ -92,16 +99,26 @@ void schedulerContext::calculateRBGsQuota() {
   fprintf(stderr, "\n");
 }
 
+void schedulerContext::runEnterpriseSchedule(int rbg_id, int slice_id) {
+  ueContext* ue = slices_[slice_id]->enterpriseSchedule(rbg_id);
+  slice_cqi_[rbg_id][slice_id] = ue->getCQI(rbg_id);
+  slice_user_[rbg_id][slice_id] = ue;
+}
+
 void schedulerContext::sequentialInterSchedule() {
+  // auto t1 = std::chrono::high_resolution_clock::now();
   for (int i = 0; i < NB_RBGS; i++) {
     for (int j = 0; j < nb_slices_; j++) {
-      ueContext* ue = slices_[j]->enterpriseSchedule(i);
-      slice_cqi_[i][j] = ue->getCQI(i);
-      slice_user_[i][j] = ue;
+      // ueContext* ue = slices_[j]->enterpriseSchedule(i);
+      // slice_cqi_[i][j] = ue->getCQI(i);
+      // slice_user_[i][j] = ue;
+
+      runEnterpriseSchedule(i, j);
     }
   }
   memset(slice_rbgs_allocated_, 0, nb_slices_ * sizeof(int8_t));
   memset(is_rbg_allocated_, 0, NB_RBGS * sizeof(bool));
+  // auto t2 = std::chrono::high_resolution_clock::now();
 
   for (int rbgid = 0; rbgid < NB_RBGS; rbgid++) {
     uint8_t max_cqi = 0;
@@ -121,6 +138,12 @@ void schedulerContext::sequentialInterSchedule() {
     ue->allocateRBG(max_rbgid);
     slice_rbgs_allocated_[max_sliceid] += 1;
   }
+
+  // auto t3 = std::chrono::high_resolution_clock::now();
+  // total_time_enterprise_ += std::chrono::duration_cast<std::chrono::microseconds>(
+  //       t2 - t1).count();
+  // total_time_interslice_ += std::chrono::duration_cast<std::chrono::microseconds>(
+  //       t3 - t2).count();
 }
 
 void schedulerContext::maxcellInterSchedule() {

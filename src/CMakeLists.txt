@@ -14,11 +14,11 @@ add_executable(test_util test_util.cpp)
 add_executable(main main.cpp)
 
 # add the flags
-set(DEBUGFLAGS "-Wall -g")
+set(DEBUGFLAGS "-Wall -g -O2 -pthread")
 set(RELEASEFLAGS "-O3 -Wall")
 
 target_link_libraries(test_util PUBLIC util)
-target_link_libraries(main PUBLIC util)
+target_link_libraries(main PUBLIC util pthread)
 
 # add the binary tree to the search path for include files
 target_include_directories(test_util PUBLIC
@@ -31,7 +31,9 @@ target_include_directories(main PUBLIC
     "${PROJECT_SOURCE_DIR}/util"
     )
 
-#set_target_properties(main PROPERTIES
-#    COMPILE_FLAGS "${DEBUGFLAGS}")
+# set_target_properties(main PROPERTIES
+#     COMPILE_FLAGS "${DEBUGFLAGS}")
+set_target_properties(test_util PROPERTIES
+    COMPILE_FLAGS "${DEBUGFLAGS}")
 set_target_properties(main PROPERTIES
-    COMPILE_FLAGS "${RELEASEFLAGS}")
+   COMPILE_FLAGS "${RELEASEFLAGS}")

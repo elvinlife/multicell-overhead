@@ -9,7 +9,7 @@
 
 //int get_mcs_from_cqi(int cqi);
 //int get_tbs_from_mcs(int mcs, int nb_rb);
-//float get_sinr_from_cqi(int cqi);
+//double get_sinr_from_cqi(int cqi);
 
 extern int MapCQIToMCS[15];
 
@@ -32,11 +32,11 @@ inline int get_tbs_from_mcs(int mcs, int nb_rb) {
   return TransportBlockSize[itbs] * nb_rb * SUBCARRIER_MULTI;
 }
 
-inline float get_sinr_from_cqi(uint8_t cqi) {
+inline double get_sinr_from_cqi(uint8_t cqi) {
   return SINRForCQIIndex[cqi-1];
 }
 
-uint8_t get_cqi_from_sinr(float sinr);
-float get_effective_sinr(std::vector<float>&);
+uint8_t get_cqi_from_sinr(double sinr);
+double get_effective_sinr(std::vector<double>&);
 
 #endif

@@ -8,13 +8,13 @@ class sliceContext
 {
   private:
     int         slice_id_;
-    float       weight_;
-    float       rbgs_offset_;
+    double      weight_;
+    double      rbgs_offset_;
     int         rbgs_quota_;
     unordered_map<int, ueContext *> ue_ctxs_;
 
   public:
-    sliceContext(int slice_id, float weight);
+    sliceContext(int slice_id, double weight);
     ~sliceContext();
     
     // append the user to the slice
@@ -29,7 +29,7 @@ class sliceContext
     ueContext* enterpriseSchedule(int rbg_id);
 
     inline int getSliceID() { return slice_id_; }
-    inline float getWeight() { return weight_; }
+    inline double getWeight() { return weight_; }
 };
 
 #endif
