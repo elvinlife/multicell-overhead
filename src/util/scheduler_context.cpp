@@ -23,7 +23,8 @@ schedulerContext::schedulerContext(int nb_slices, int ues_per_slice)
   for (int i = 0; i < nb_slices_; ++i) {
     slices_[i] = new sliceContext(i, 1.0 / nb_slices_);
     for (int j = 0; j < ues_per_slice; ++j) {
-      ueContext* ue = new ueContext(ue_id, user_trace_mapping[ue_id]);
+      int trace_id = user_trace_mapping[ue_id % user_trace_mapping.size()];
+      ueContext* ue = new ueContext(ue_id, trace_id);
       slices_[i]->appendUser(ue);
       ue_id += 1;
     }
@@ -55,8 +56,8 @@ void schedulerContext::newTTI(unsigned int tti) {
   }
   calculateRBGsQuota();
   auto t2 = std::chrono::high_resolution_clock::now();
-  //maxcellInterSchedule();
-  sequentialInterSchedule();
+  maxcellInterSchedule();
+  //sequentialInterSchedule();
   auto t3 = std::chrono::high_resolution_clock::now();
   total_time_enterprise_ += std::chrono::duration_cast<std::chrono::microseconds>(
         t2 - t1).count();

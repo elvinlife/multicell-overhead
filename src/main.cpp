@@ -1,11 +1,19 @@
 #include "util.h"
 #include "scheduler_context.h"
 #include <cstring>
+#include <cstdlib>
 #include <chrono>
 #include <iostream>
 
-int main() {
-  schedulerContext scheduler(10, 20);
+int main(int argc, char* argv[]) {
+  if (argc != 3) {
+    throw std::runtime_error("./radiosaber [num_slices] [num_users_per_slice]");
+  }
+  int num_slices = atoi(argv[1]);
+  if (num_slices > 30) {
+    throw std::runtime_error("Maximal number of slices is 30");
+  }
+  schedulerContext scheduler(num_slices, atoi(argv[2]));
   int global_tti = 0;
   int total_tti = 10000;
   auto start = std::chrono::high_resolution_clock::now();

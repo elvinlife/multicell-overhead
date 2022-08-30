@@ -11,14 +11,14 @@ add_subdirectory(util)
 
 # add the executable
 add_executable(test_util test_util.cpp)
-add_executable(main main.cpp)
+add_executable(radiosaber main.cpp)
 
 # add the flags
 set(DEBUGFLAGS "-Wall -g -O2 -pthread")
 set(RELEASEFLAGS "-O3 -Wall")
 
 target_link_libraries(test_util PUBLIC util)
-target_link_libraries(main PUBLIC util pthread)
+target_link_libraries(radiosaber PUBLIC util pthread)
 
 # add the binary tree to the search path for include files
 target_include_directories(test_util PUBLIC
@@ -26,7 +26,7 @@ target_include_directories(test_util PUBLIC
     "${PROJECT_SOURCE_DIR}/util"
     )
 
-target_include_directories(main PUBLIC
+target_include_directories(radiosaber PUBLIC
     "${PROJECT_BINARY_DIR}"
     "${PROJECT_SOURCE_DIR}/util"
     )
@@ -35,5 +35,5 @@ target_include_directories(main PUBLIC
 #     COMPILE_FLAGS "${DEBUGFLAGS}")
 set_target_properties(test_util PROPERTIES
     COMPILE_FLAGS "${DEBUGFLAGS}")
-set_target_properties(main PROPERTIES
+set_target_properties(radiosaber PROPERTIES
    COMPILE_FLAGS "${RELEASEFLAGS}")
