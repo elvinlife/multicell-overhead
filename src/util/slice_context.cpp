@@ -16,8 +16,8 @@ void sliceContext::appendUser(ueContext *ue) {
 
 // function definition of sliceContext
 void sliceContext::newTTI(unsigned int tti) {
-  fprintf(stderr, "newTTI(%u) enterprise scheduler: %d\n",
-      tti, slice_id_);
+  // fprintf(stderr, "newTTI(%u) enterprise scheduler: %d\n",
+  //     tti, slice_id_);
   for(auto it = ue_ctxs_.begin(); it != ue_ctxs_.end(); ++it) {
     // we update it after allocating every rbg
     it->second->updateThroughput(tti);

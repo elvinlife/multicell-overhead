@@ -17,7 +17,17 @@ void test_effective_sinr(){
   assert(throughput == 1632);
 }
 
+void test_cqi_sinr() {
+    vector<double> rbgs_sinrs;
+    double sinr = get_sinr_from_cqi(13);
+    rbgs_sinrs.push_back(sinr);
+    double eff_sinr = get_effective_sinr(rbgs_sinrs);
+    int cqi = get_cqi_from_sinr(eff_sinr);
+    assert( cqi == 13);
+}
+
 int main()
 {
   test_effective_sinr();
+  test_cqi_sinr();
 }

@@ -26,8 +26,10 @@ int main(int argc, char* argv[]) {
   long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(
         elapsed).count();
   std::cout << "avg_time(us): " << microseconds / total_tti << std::endl;
-  std::cout << "enterprise_time(us): " \
-      << scheduler.total_time_enterprise_ / total_tti << std::endl;
-  std::cout << "interslice_time(us): " \
-      << scheduler.total_time_interslice_ / total_tti << std::endl;
+  std::cout << "time_t1(us): " \
+      << scheduler.total_time_t1_ / total_tti << std::endl;
+  std::cout << "time_t2(us): " \
+      << scheduler.total_time_t2_ / total_tti << std::endl;
+  std::cout << "time_t3(us): " \
+      << scheduler.total_time_t3_ / total_tti << std::endl;
 }
