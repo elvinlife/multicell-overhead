@@ -187,13 +187,13 @@ void schedulerContext::maxcellInterSchedule() {
     slice_rbgs_allocated_[max_sliceid] += 1;
 
     // recomputation
-    // if (slice_rbgs_allocated[max_sliceid] >= slice_rbgs_quota[max_sliceid])
-    //   continue;
-    // sliceContext* slice = slices_[max_sliceid];
-    // for (int rbgid = 0; rbgid < NB_RBGS; rbgid++) {
-    //   ueContext* new_ue = slice->enterpriseSchedule(rbgid);
-    //   slice_cqi_[rbgid][max_sliceid] = new_ue->getCQI(rbgid);
-    //   slice_user_[rbgid][max_sliceid] = new_ue;
-    // }
+    if (slice_rbgs_allocated_[max_sliceid] >= slice_rbgs_quota_[max_sliceid])
+      continue;
+    sliceContext* slice = slices_[max_sliceid];
+    for (int rbgid = 0; rbgid < NB_RBGS; rbgid++) {
+      ueContext* new_ue = slice->enterpriseSchedule(rbgid);
+      slice_cqi_[rbgid][max_sliceid] = new_ue->getCQI(rbgid);
+      slice_user_[rbgid][max_sliceid] = new_ue;
+    }
   }
 }
