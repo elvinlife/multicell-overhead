@@ -3,9 +3,8 @@
 
 #define MAX_SLICES 30
 #define MAX_TRACE_TTIS 500
-#define NB_RBGS 62
-#define NB_RBS 496
-#define RBS_PER_RBG 8
+#define NB_RBGS 32
+#define RBS_PER_RBG 4
 
 #include <cstdint>
 #include <vector>

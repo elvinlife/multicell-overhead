@@ -22,10 +22,10 @@ ueContext::ueContext(int ue_id, int trace_id)
   std::string line;
   while (std::getline(ifs, line)) {
     std::istringstream iss(line);
-    for (int i = 0; i < NB_RBS; ++i) {
+    for (int i = 0; i < 512; ++i) {
       iss >> cqi;
-      if (i % RBS_PER_RBG == 0) {
-        subband_cqis_trace_[trace_ttis_][i / RBS_PER_RBG] = (uint8_t)cqi;
+      if (i % (RBS_PER_RBG * 4) == 0) {
+        subband_cqis_trace_[trace_ttis_][i / (RBS_PER_RBG * 4)] = (uint8_t)cqi;
       }
     }
     trace_ttis_ += 1;
