@@ -3,13 +3,12 @@
 #include <vector>
 #include <cassert>
 #include <cstdint>
+#include <string>
+
+static std::string trace_dir = "/home/alvin/Research/RadioSaber/pbecc-traces-noise0/";
 
 // times four since we're using 60khz subcarrier instead of 15khz
 #define SUBCARRIER_MULTI 4
-
-//int get_mcs_from_cqi(int cqi);
-//int get_tbs_from_mcs(int mcs, int nb_rb);
-//double get_sinr_from_cqi(int cqi);
 
 extern int MapCQIToMCS[15];
 

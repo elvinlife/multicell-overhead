@@ -10,8 +10,8 @@ int main(int argc, char* argv[]) {
     throw std::runtime_error("./radiosaber [num_slices] [num_users_per_slice]");
   }
   int num_slices = atoi(argv[1]);
-  if (num_slices > 30) {
-    throw std::runtime_error("Maximal number of slices is 30");
+  if (num_slices > 40) {
+    throw std::runtime_error("Maximal number of slices is 40");
   }
   schedulerContext scheduler(num_slices, atoi(argv[2]));
   int global_tti = 0;

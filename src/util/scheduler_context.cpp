@@ -11,7 +11,7 @@
 schedulerContext::schedulerContext(int nb_slices, int ues_per_slice)
   : pool_(2), nb_slices_(nb_slices), ues_per_slice_(ues_per_slice) {
   vector<int> user_trace_mapping;
-  std::string fname = "/home/alvin/Research/RadioSaber/pbecc-traces-noise0/mapping0.config";
+  std::string fname = trace_dir + "mapping0.config";
   std::ifstream ifs(fname, std::ifstream::in);
   int ue_id, trace_id;
   while (ifs >> ue_id >> trace_id) {
@@ -58,7 +58,7 @@ void schedulerContext::newTTI(unsigned int tti) {
   calculateRBGsQuota();
   auto t2 = std::chrono::high_resolution_clock::now();
   maxcellInterSchedule();
-  //sequentialInterSchedule();
+  // sequentialInterSchedule();
 
   total_time_t1_ += std::chrono::duration_cast<std::chrono::microseconds>(
         t2 - t1).count();
@@ -110,13 +110,13 @@ void schedulerContext::assignOneSlice(int slice_id) {
 }
 
 void schedulerContext::sequentialInterSchedule() {
-  for (int i = 0; i < NB_RBGS; i++) {
-    for (int j = 0; j < nb_slices_; j++) {
-      ueContext* ue = slices_[j]->enterpriseSchedule(i);
-      slice_cqi_[i][j] = ue->getCQI(i);
-      slice_user_[i][j] = ue;
-    }
+  auto t1 = std::chrono::high_resolution_clock::now();
+  for (int i = 0; i < nb_slices_; i++) {
+    assignOneSlice(i);
   }
+  auto t2 = std::chrono::high_resolution_clock::now();
+  total_time_t3_ += std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+
   memset(slice_rbgs_allocated_, 0, nb_slices_ * sizeof(int8_t));
   memset(is_rbg_allocated_, 0, NB_RBGS * sizeof(bool));
 
@@ -137,6 +137,16 @@ void schedulerContext::sequentialInterSchedule() {
     is_rbg_allocated_[max_rbgid] = true;
     ue->allocateRBG(max_rbgid);
     slice_rbgs_allocated_[max_sliceid] += 1;
+
+    // recomputation
+    if (slice_rbgs_allocated_[max_sliceid] >= slice_rbgs_quota_[max_sliceid])
+      continue;
+    sliceContext* slice = slices_[max_sliceid];
+    for (int rbgid = 0; rbgid < NB_RBGS; rbgid++) {
+      ueContext* new_ue = slice->enterpriseSchedule(rbgid);
+      slice_cqi_[rbgid][max_sliceid] = new_ue->getCQI(rbgid);
+      slice_user_[rbgid][max_sliceid] = new_ue;
+    }
   }
 }
 

@@ -14,8 +14,7 @@ int ueContext::cqi_report_period_ = 40;
 
 ueContext::ueContext(int ue_id, int trace_id)
   :ue_id_(ue_id), trace_ttis_(0), ewma_throughput_(0) {
-  std::string trace_fname = "/home/alvin/Research/RadioSaber/pbecc-traces-noise0/ue"
-      + std::to_string(trace_id) + ".log";
+  std::string trace_fname = trace_dir + "ue" + std::to_string(trace_id) + ".log";
   std::ifstream ifs(trace_fname, std::ifstream::in);
   int cqi = 0;
   trace_ttis_ = 0;

@@ -1,7 +1,7 @@
 #ifndef UE_CONTEXT_H_
 #define UE_CONTEXT_H_
 
-#define MAX_SLICES 30
+#define MAX_SLICES 40
 #define MAX_TRACE_TTIS 500
 #define NB_RBGS 32
 #define RBS_PER_RBG 4
