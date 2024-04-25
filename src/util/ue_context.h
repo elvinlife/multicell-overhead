@@ -10,44 +10,39 @@
 #include <vector>
 using std::vector;
 
-class ueContext
-{
+class ueContext {
   static double beta_;
   static int cqi_report_period_;
-  
-  private:
-    int             ue_id_;
-    int             trace_ttis_;
-    double          ewma_throughput_;
-    uint8_t         subband_cqis_[NB_RBGS];
-    uint8_t         subband_cqis_trace_[MAX_TRACE_TTIS][NB_RBGS];
-    double          sched_metrics_[NB_RBGS];
-    vector<int>     rbgs_allocated_;
 
-  public:
-    ueContext(int ue_id, int trace_id);
-    ~ueContext();
-    
-    // at the beginning of every TTI, update the history throughput
-    // based on the allocated RBGs in the previous TTI
-    void updateThroughput(unsigned int tti);
+private:
+  int ue_id_;
+  int trace_ttis_;
+  double ewma_throughput_;
+  uint8_t subband_cqis_[NB_RBGS];
+  uint8_t subband_cqis_trace_[MAX_TRACE_TTIS][NB_RBGS];
+  double sched_metrics_[NB_RBGS];
+  vector<int> rbgs_allocated_;
 
-    // calculate the user metric of all rbgs and store in the user context
-    void calculateRankingMetric();
+public:
+  ueContext(int ue_id, int trace_id);
+  ~ueContext();
 
-    inline void allocateRBG(int rbg_id) {
-      rbgs_allocated_.push_back(rbg_id);
-    }
+  // at the beginning of every TTI, update the history throughput
+  // based on the allocated RBGs in the previous TTI
+  void updateThroughput(unsigned int tti);
 
-    // return the user CQI of this rbg
-    inline uint8_t getCQI(int rbg_id) {return subband_cqis_[rbg_id];}
+  // calculate the user metric of all rbgs and store in the user context
+  void calculateRankingMetric();
 
-    inline int getUserID() { return ue_id_; }
+  inline void allocateRBG(int rbg_id) { rbgs_allocated_.push_back(rbg_id); }
 
-    // get the user metric of this rbg(without compute)
-    inline double getRankingMetric(int rbg_id) {
-      return sched_metrics_[rbg_id];
-    }
+  // return the user CQI of this rbg
+  inline uint8_t getCQI(int rbg_id) { return subband_cqis_[rbg_id]; }
+
+  inline int getUserID() { return ue_id_; }
+
+  // get the user metric of this rbg(without compute)
+  inline double getRankingMetric(int rbg_id) { return sched_metrics_[rbg_id]; }
 };
 
 #endif

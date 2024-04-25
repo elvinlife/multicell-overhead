@@ -1,15 +1,15 @@
 #include "scheduler_context.h"
 #include "util.h"
+#include <chrono>
 #include <cmath>
-#include <cstring>
-#include <string>
 #include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <sstream>
-#include <chrono>
+#include <string>
 
 schedulerContext::schedulerContext(int nb_slices, int ues_per_slice)
-  : pool_(2), nb_slices_(nb_slices), ues_per_slice_(ues_per_slice) {
+    : pool_(2), nb_slices_(nb_slices), ues_per_slice_(ues_per_slice) {
   vector<int> user_trace_mapping;
   std::string fname = trace_dir + "mapping0.config";
   std::ifstream ifs(fname, std::ifstream::in);
@@ -24,13 +24,13 @@ schedulerContext::schedulerContext(int nb_slices, int ues_per_slice)
     slices_[i] = new sliceContext(i, 1.0 / nb_slices_);
     for (int j = 0; j < ues_per_slice; ++j) {
       int trace_id = user_trace_mapping[ue_id % user_trace_mapping.size()];
-      ueContext* ue = new ueContext(ue_id, trace_id);
+      ueContext *ue = new ueContext(ue_id, trace_id);
       slices_[i]->appendUser(ue);
       ue_id += 1;
     }
   }
   for (int i = 0; i < NB_RBGS; ++i) {
-    slice_user_[i] = new ueContext* [nb_slices_];
+    slice_user_[i] = new ueContext *[nb_slices_];
     slice_cqi_[i] = new uint8_t[nb_slices_];
   }
 
@@ -44,8 +44,8 @@ schedulerContext::~schedulerContext() {
     delete slices_[i];
   }
   for (int i = 0; i < NB_RBGS; ++i) {
-    delete [] slice_user_[i];
-    delete [] slice_cqi_[i];
+    delete[] slice_user_[i];
+    delete[] slice_cqi_[i];
   }
 }
 
@@ -60,15 +60,15 @@ void schedulerContext::newTTI(unsigned int tti) {
   maxcellInterSchedule();
   // sequentialInterSchedule();
 
-  total_time_t1_ += std::chrono::duration_cast<std::chrono::microseconds>(
-        t2 - t1).count();
+  total_time_t1_ +=
+      std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
 }
 
 void schedulerContext::calculateRBGsQuota() {
   int extra_rbgs = NB_RBGS;
   for (int i = 0; i < nb_slices_; i++) {
-    slice_rbgs_share_[i] = slices_[i]->getWeight() * NB_RBGS \
-        + slice_rbgs_offset_[i];
+    slice_rbgs_share_[i] =
+        slices_[i]->getWeight() * NB_RBGS + slice_rbgs_offset_[i];
     slice_rbgs_quota_[i] = std::floor(slice_rbgs_share_[i]);
     extra_rbgs -= slice_rbgs_quota_[i];
   }
@@ -94,16 +94,16 @@ void schedulerContext::calculateRBGsQuota() {
 
 void schedulerContext::assignOneRBG(int rbg_id) {
   for (int i = 0; i < nb_slices_; i++) {
-    ueContext* ue = slices_[i]->enterpriseSchedule(rbg_id);
+    ueContext *ue = slices_[i]->enterpriseSchedule(rbg_id);
     slice_cqi_[rbg_id][i] = ue->getCQI(rbg_id);
     slice_user_[rbg_id][i] = ue;
   }
 }
 
 void schedulerContext::assignOneSlice(int slice_id) {
-  sliceContext* slice = slices_[slice_id];
+  sliceContext *slice = slices_[slice_id];
   for (int i = 0; i < NB_RBGS; i++) {
-    ueContext* ue = slice->enterpriseSchedule(i);
+    ueContext *ue = slice->enterpriseSchedule(i);
     slice_cqi_[i][slice_id] = ue->getCQI(i);
     slice_user_[i][slice_id] = ue;
   }
@@ -115,7 +115,8 @@ void schedulerContext::sequentialInterSchedule() {
     assignOneSlice(i);
   }
   auto t2 = std::chrono::high_resolution_clock::now();
-  total_time_t3_ += std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+  total_time_t3_ +=
+      std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
 
   memset(slice_rbgs_allocated_, 0, nb_slices_ * sizeof(int8_t));
   memset(is_rbg_allocated_, 0, NB_RBGS * sizeof(bool));
@@ -125,7 +126,7 @@ void schedulerContext::sequentialInterSchedule() {
     int max_rbgid = -1, max_sliceid = -1;
     for (int sliceid = 0; sliceid < nb_slices_; sliceid++) {
       if (slice_rbgs_allocated_[sliceid] >= slice_rbgs_quota_[sliceid])
-          continue;
+        continue;
       if (slice_cqi_[rbgid][sliceid] > max_cqi) {
         max_cqi = slice_cqi_[rbgid][sliceid];
         max_rbgid = rbgid;
@@ -133,7 +134,7 @@ void schedulerContext::sequentialInterSchedule() {
       }
     }
     assert(max_rbgid != -1);
-    ueContext* ue = slice_user_[max_rbgid][max_sliceid];
+    ueContext *ue = slice_user_[max_rbgid][max_sliceid];
     is_rbg_allocated_[max_rbgid] = true;
     ue->allocateRBG(max_rbgid);
     slice_rbgs_allocated_[max_sliceid] += 1;
@@ -141,9 +142,9 @@ void schedulerContext::sequentialInterSchedule() {
     // recomputation
     if (slice_rbgs_allocated_[max_sliceid] >= slice_rbgs_quota_[max_sliceid])
       continue;
-    sliceContext* slice = slices_[max_sliceid];
+    sliceContext *slice = slices_[max_sliceid];
     for (int rbgid = 0; rbgid < NB_RBGS; rbgid++) {
-      ueContext* new_ue = slice->enterpriseSchedule(rbgid);
+      ueContext *new_ue = slice->enterpriseSchedule(rbgid);
       slice_cqi_[rbgid][max_sliceid] = new_ue->getCQI(rbgid);
       slice_user_[rbgid][max_sliceid] = new_ue;
     }
@@ -152,7 +153,7 @@ void schedulerContext::sequentialInterSchedule() {
 
 void schedulerContext::maxcellInterSchedule() {
   auto t1 = std::chrono::high_resolution_clock::now();
-  //pool_.GetMutex().lock();
+  // pool_.GetMutex().lock();
   for (int i = 0; i < nb_slices_; i++) {
     assignOneSlice(i);
     // pool_.JobEnqueue(std::bind(&schedulerContext::assignOneSlice, this, i));
@@ -160,18 +161,19 @@ void schedulerContext::maxcellInterSchedule() {
   // pool_.GetMutex().unlock();
   // pool_.NotifyAll();
   // auto t3 = std::chrono::high_resolution_clock::now();
-  // total_time_t2_ += std::chrono::duration_cast<std::chrono::microseconds>(t3 - t1).count();
-  // while (pool_.IsBusy()) {}
+  // total_time_t2_ += std::chrono::duration_cast<std::chrono::microseconds>(t3
+  // - t1).count(); while (pool_.IsBusy()) {}
   auto t2 = std::chrono::high_resolution_clock::now();
-  total_time_t3_ += std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+  total_time_t3_ +=
+      std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
 
   memset(slice_rbgs_allocated_, 0, nb_slices_ * sizeof(uint8_t));
   memset(is_rbg_allocated_, 0, NB_RBGS * sizeof(bool));
-  
+
   for (int k = 0; k < NB_RBGS; k++) {
     uint8_t max_cqi = 0;
     int max_rbgid = -1, max_sliceid = -1;
-    for (int rbgid = 0; rbgid < NB_RBGS; rbgid++ ) {
+    for (int rbgid = 0; rbgid < NB_RBGS; rbgid++) {
       // the rbg has been allocated
       if (is_rbg_allocated_[rbgid])
         continue;
@@ -190,8 +192,8 @@ void schedulerContext::maxcellInterSchedule() {
     // fprintf(stderr, "rbg: %d allocated to slice: %d left: %d\n",
     //     max_rbgid, max_sliceid, NB_RBGS - k - 1);
     assert(max_rbgid != -1);
-    ueContext* ue = slice_user_[max_rbgid][max_sliceid];
-    
+    ueContext *ue = slice_user_[max_rbgid][max_sliceid];
+
     is_rbg_allocated_[max_rbgid] = true;
     ue->allocateRBG(max_rbgid);
     slice_rbgs_allocated_[max_sliceid] += 1;
@@ -199,9 +201,9 @@ void schedulerContext::maxcellInterSchedule() {
     // recomputation
     if (slice_rbgs_allocated_[max_sliceid] >= slice_rbgs_quota_[max_sliceid])
       continue;
-    sliceContext* slice = slices_[max_sliceid];
+    sliceContext *slice = slices_[max_sliceid];
     for (int rbgid = 0; rbgid < NB_RBGS; rbgid++) {
-      ueContext* new_ue = slice->enterpriseSchedule(rbgid);
+      ueContext *new_ue = slice->enterpriseSchedule(rbgid);
       slice_cqi_[rbgid][max_sliceid] = new_ue->getCQI(rbgid);
       slice_user_[rbgid][max_sliceid] = new_ue;
     }
