@@ -45,3 +45,5 @@ TOOLS/make_sum
 *.backup
 
 build
+Debug
+Release
