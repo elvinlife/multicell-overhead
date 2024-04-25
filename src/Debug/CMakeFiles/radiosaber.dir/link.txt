@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/radiosaber.dir/main.cpp.o -o radiosaber  util/libutil.a -lpthread
