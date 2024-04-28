@@ -25,7 +25,9 @@ ueContext::ueContext(int ue_id, int trace_id)
     for (int i = 0; i < 512; ++i) {
       iss >> cqi;
       if (i % (RBS_PER_RBG * 4) == 0) {
-        subband_cqis_trace_[trace_ttis_][i / (RBS_PER_RBG * 4)] = (uint8_t)cqi;
+        // subband_cqis_trace_[trace_ttis_][i / (RBS_PER_RBG * 4)] =
+        // (uint8_t)cqi;
+        subband_cqis_trace_[trace_ttis_][i / (RBS_PER_RBG * 4)] = 6;
       }
     }
     trace_ttis_ += 1;
@@ -58,12 +60,23 @@ void ueContext::updateThroughput(unsigned int tti) {
   rbgs_allocated_.clear();
 }
 
-void ueContext::calculateRankingMetric() {
+void ueContext::calcPFMetricAll() {
   // default PF
   for (int i = 0; i < NB_RBGS; i++) {
     int tbs = get_tbs_from_mcs(get_mcs_from_cqi(subband_cqis_[i]), 1);
     sched_metrics_[i] = tbs / ewma_throughput_;
   }
+}
+
+void ueContext::calcPFMetricOneRB(int rbgid, int mute_cell) {
+  uint8_t cqi = subband_cqis_[rbgid];
+  if (mute_cell != -1) {
+    cqi += 2;
+    if (cqi >= 15)
+      cqi = 15;
+  }
+  int tbs = get_tbs_from_mcs(get_mcs_from_cqi(cqi), 1);
+  sched_metrics_[rbgid] = tbs / ewma_throughput_;
 }
 
 /*

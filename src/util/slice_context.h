@@ -23,6 +23,8 @@ public:
   // calculate metrics of all ues for all rbgs
   void newTTI(unsigned int tti);
 
+  void calcPFMetricOneRBG(int rbgid, int mute_cell);
+
   // compare the available metrics of all ues w.r.t the rbg_id
   // return the scheduled ue context
   ueContext *enterpriseSchedule(int rbg_id);

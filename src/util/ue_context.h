@@ -32,7 +32,9 @@ public:
   void updateThroughput(unsigned int tti);
 
   // calculate the user metric of all rbgs and store in the user context
-  void calculateRankingMetric();
+  void calcPFMetricAll();
+
+  void calcPFMetricOneRB(int rbgid, int mute_cell);
 
   inline void allocateRBG(int rbg_id) { rbgs_allocated_.push_back(rbg_id); }
 
