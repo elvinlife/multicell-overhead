@@ -6,6 +6,7 @@ project(radiosaber VERSION 1.0)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+include_directories(/usr/local/boost_1_82_0)
 # add the util library
 add_subdirectory(util)
 

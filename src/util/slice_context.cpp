@@ -26,11 +26,11 @@ void sliceContext::calcPFMetricOneRBG(int rbg_id, int mute_cell) {
   }
 }
 
-ueContext *sliceContext::enterpriseSchedule(int rbg_id) {
+ueContext *sliceContext::enterpriseSchedule(int rbg_id, int mute_cell) {
   ueContext *ue = NULL;
   double metric_max = -1;
   for (auto it = ue_ctxs_.begin(); it != ue_ctxs_.end(); ++it) {
-    double metric = it->second->getRankingMetric(rbg_id);
+    double metric = it->second->getRankingMetric(rbg_id, mute_cell);
     if (metric > metric_max) {
       metric_max = metric;
       ue = it->second;

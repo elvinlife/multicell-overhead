@@ -64,7 +64,7 @@ void ueContext::calcPFMetricAll() {
   // default PF
   for (int i = 0; i < NB_RBGS; i++) {
     int tbs = get_tbs_from_mcs(get_mcs_from_cqi(subband_cqis_[i]), 1);
-    sched_metrics_[i] = tbs / ewma_throughput_;
+    sched_metrics_[0][i] = tbs / ewma_throughput_;
   }
 }
 
@@ -76,23 +76,5 @@ void ueContext::calcPFMetricOneRB(int rbgid, int mute_cell) {
       cqi = 15;
   }
   int tbs = get_tbs_from_mcs(get_mcs_from_cqi(cqi), 1);
-  sched_metrics_[rbgid] = tbs / ewma_throughput_;
+  sched_metrics_[mute_cell + 1][rbgid] = tbs / ewma_throughput_;
 }
-
-/*
-inline void ueContext::allocateRBG(int rbg_id) {
-  // let's not update the metric currently
-  // int bw_kbps = get_tbs_from_mcs(
-  //   get_mcs_from_cqi( subband_cqis_[rbg_id] ), 1
-  // );
-  // ewma_throughput_ += beta_ * bw_kbps;
-  // for (int i = 0; i < NB_RBGS; i++) {
-  //   int tbs = get_tbs_from_mcs(
-  //     get_mcs_from_cqi(subband_cqis_[i]), 1
-  //   );
-  //   sched_metrics_[i] = tbs / ewma_throughput_;
-  // }
-
-  rbgs_allocated_.push_back(rbg_id);
-}
-*/
