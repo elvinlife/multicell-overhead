@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <pthread.h>
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
@@ -15,6 +16,12 @@ int main(int argc, char *argv[]) {
   if (num_slices > 40) {
     throw std::runtime_error("Maximal number of slices is 40");
   }
+  // bind to core 0
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  CPU_SET(0, &cpuset);
+  pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+
   schedulerContext scheduler(num_slices, atoi(argv[2]));
   int total_tti = 10000;
   auto start = std::chrono::high_resolution_clock::now();
