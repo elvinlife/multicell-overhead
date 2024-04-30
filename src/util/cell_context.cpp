@@ -61,7 +61,6 @@ void cellContext::muteOneRBG(int rbgid, int mute_cell) {
 }
 
 void cellContext::calculateRBGsQuota() {
-  int extra_rbgs = NB_RBGS;
   for (int i = 0; i < nb_slices_; i++) {
     slice_rbgs_share_[i] =
         slices_[i]->getWeight() * NB_RBGS + slice_rbgs_offset_[i];
