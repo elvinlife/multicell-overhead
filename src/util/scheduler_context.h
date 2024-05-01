@@ -2,9 +2,16 @@
 #define SCHEDULER_CONTEXT_H_
 #include "cell_context.h"
 #include "thread_pool.h"
+#include "ue_context.h"
 #include "util.h"
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
+
+struct muteScheduleResult {
+  double score;
+  ueContext *ues[NB_CELLS];
+  int slices_benefit[NB_CELLS];
+};
 
 class schedulerContext {
 private:
@@ -16,10 +23,11 @@ private:
 public:
   schedulerContext(int nb_slices, int ues_per_slice);
   ~schedulerContext();
-  void scheduleOneRBWithMute(int rbgid, int muteid, double *total_score);
+  void scheduleOneRBWithMute(int rbgid, int muteid, muteScheduleResult *result);
   void newTTI(unsigned int tti);
-  int finished_task = 0;
-  std::mutex pending_task_mutex;
+  long long total_time_t1_ = 0;
+  long long total_time_t2_ = 0;
+  long long total_time_t3_ = 0;
 };
 
 #endif

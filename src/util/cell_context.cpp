@@ -78,8 +78,9 @@ void cellContext::assignOneRBG(int rbg_id, int mute_cell) {
   }
 }
 
-int cellContext::addScheduleMetric(vector<double> &slice_metric, int rbgid,
-                                   int mute_cell) {
+std::pair<int, ueContext *>
+cellContext::addScheduleMetric(vector<double> &slice_metric, int rbgid,
+                               int mute_cell) {
   // how do we deal with quota?
   uint8_t max_cqi = 0;
   int max_sliceid = -1;
@@ -101,7 +102,7 @@ int cellContext::addScheduleMetric(vector<double> &slice_metric, int rbgid,
   assert(max_sliceid != -1);
   ueContext *ue = slice_user_[mute_cell + 1][max_sliceid];
   slice_metric[max_sliceid] += ue->getRankingMetric(rbgid, mute_cell);
-  return max_sliceid;
+  return std::pair<int, ueContext *>(max_sliceid, ue);
 }
 
 double cellContext::getScheduleMetricGivenSid(int sid, int rbgid) {
