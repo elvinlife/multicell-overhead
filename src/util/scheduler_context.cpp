@@ -8,8 +8,7 @@
 #include <unordered_set>
 
 schedulerContext::schedulerContext(int nb_slices, int ues_per_slice)
-    : nb_slices_(nb_slices),
-      boost_pool_(std::thread::hardware_concurrency() - 1) {
+    : nb_slices_(nb_slices) {
   for (int cid = 0; cid < NB_CELLS; cid++) {
     vector<double> slice_cost(nb_slices);
     cell_slice_cost.push_back(slice_cost);
@@ -18,7 +17,6 @@ schedulerContext::schedulerContext(int nb_slices, int ues_per_slice)
 }
 
 schedulerContext::~schedulerContext() {
-  boost_pool_.join();
   for (int cid = 0; cid < NB_CELLS; cid++) {
     delete all_cells[cid];
   }

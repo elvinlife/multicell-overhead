@@ -4,8 +4,6 @@
 #include "thread_pool.h"
 #include "ue_context.h"
 #include "util.h"
-#include <boost/asio/post.hpp>
-#include <boost/asio/thread_pool.hpp>
 
 struct muteScheduleResult {
   double score;
@@ -18,7 +16,6 @@ private:
   cellContext *all_cells[NB_CELLS];
   vector<vector<double>> cell_slice_cost;
   int nb_slices_;
-  boost::asio::thread_pool boost_pool_;
 
 public:
   schedulerContext(int nb_slices, int ues_per_slice);
