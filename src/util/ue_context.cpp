@@ -14,23 +14,11 @@ int ueContext::cqi_report_period_ = 40;
 
 ueContext::ueContext(int ue_id, int trace_id)
     : ue_id_(ue_id), trace_ttis_(0), ewma_throughput_(0) {
-  std::string trace_fname =
-      trace_dir + "ue" + std::to_string(trace_id) + ".log";
-  std::ifstream ifs(trace_fname, std::ifstream::in);
-  int cqi = 0;
-  trace_ttis_ = 0;
-  std::string line;
-  while (std::getline(ifs, line)) {
-    std::istringstream iss(line);
-    for (int i = 0; i < 512; ++i) {
-      iss >> cqi;
-      if (i % (RBS_PER_RBG * 4) == 0) {
-        // subband_cqis_trace_[trace_ttis_][i / (RBS_PER_RBG * 4)] =
-        // (uint8_t)cqi;
-        subband_cqis_trace_[trace_ttis_][i / (RBS_PER_RBG * 4)] = 6;
-      }
+  trace_ttis_ = MAX_TRACE_TTIS;
+  for (int i = 0; i < MAX_TRACE_TTIS; i++) {
+    for (int j = 0; j < NB_RBGS; j++) {
+      subband_cqis_trace_[i][j] = 6;
     }
-    trace_ttis_ += 1;
   }
 }
 
