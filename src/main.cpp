@@ -2,6 +2,7 @@
 #include "util.h"
 #include "util/cell_context.h"
 #include "util/scheduler_context.h"
+#include "util/util.h"
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
@@ -13,7 +14,7 @@ int main(int argc, char *argv[]) {
     throw std::runtime_error("./radiosaber [num_slices] [num_users_per_slice]");
   }
   int num_slices = atoi(argv[1]);
-  if (num_slices > 40) {
+  if (num_slices > MAX_SLICES) {
     throw std::runtime_error("Maximal number of slices is 40");
   }
   // bind to core 0

@@ -6,7 +6,7 @@
 #include <vector>
 
 #define NB_CELLS 5
-#define MAX_SLICES 40
+#define MAX_SLICES 10
 
 static std::string trace_dir =
     "/home/yc28/Research/RadioSaber/cqi-traces-noise0/";

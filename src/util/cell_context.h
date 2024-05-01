@@ -22,16 +22,18 @@ private:
 public:
   int8_t slice_rbgs_allocated_[MAX_SLICES];
   double slice_rbgs_share_[MAX_SLICES];
+  double slice_nomute_metric[MAX_SLICES];
   cellContext(int nb_slices, int ues_per_slice, int cell_id);
   ~cellContext();
   void calculateRBGsQuota();
-  void muteOneRBG(int rbgid, int mute_cell);
   // add the metric after the enterprise schedulers finish, return the
   // @slice_id who gets the @rbgid
-  std::pair<int, ueContext *> addScheduleMetric(vector<double> &, int rbgid,
+  std::pair<int, ueContext *> addScheduleMetric(double *, int rbgid,
                                                 int mute_cell);
   // with the constraint that @sid must be given rbgid, get the metric
   double getScheduleMetricGivenSid(int sid, int rbgid);
+
+  void calculateNoMutingMetric(int rbgid);
   // for one rbg, check which user is scheduled for every slice
   void assignOneRBG(int rbg_id, int mute_cell);
 

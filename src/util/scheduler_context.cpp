@@ -24,28 +24,27 @@ schedulerContext::~schedulerContext() {
 
 void schedulerContext::scheduleOneRBWithMute(int rbgid, int muteid,
                                              muteScheduleResult *result) {
-  vector<double> slice_metrics(nb_slices_);
-  vector<double> slice_metrics_nomute(nb_slices_);
-  vector<int> cell_to_slice(NB_CELLS);
+  double slice_metrics[MAX_SLICES];
+  double slice_metrics_nomute[MAX_SLICES];
+  int cell_to_slice[NB_CELLS];
   result->score = 0;
   for (int cid = 0; cid < NB_CELLS; cid++) {
     if (cid == muteid)
       continue;
-    all_cells[cid]->muteOneRBG(rbgid, muteid);
     all_cells[cid]->assignOneRBG(rbgid, muteid);
     auto it = all_cells[cid]->addScheduleMetric(slice_metrics, rbgid, muteid);
     cell_to_slice[cid] = it.first;
     result->slices_benefit[cid] = it.first;
     result->ues[cid] = it.second;
   }
-  // with the same slice constraint(under no muting)
+  // with the same slice constraint(under no muting) this can be optimized, we
+  // can calculate which user is scheduled in nomuting assumption
   for (int cid = 0; cid < NB_CELLS; cid++) {
-    all_cells[cid]->muteOneRBG(rbgid, -1);
-    all_cells[cid]->assignOneRBG(rbgid, -1);
+    if (cid == muteid)
+      continue;
     int same_slice = cell_to_slice[cid];
-    double metric =
-        all_cells[cid]->getScheduleMetricGivenSid(same_slice, rbgid);
-    slice_metrics_nomute[same_slice] += metric;
+    slice_metrics_nomute[same_slice] +=
+        all_cells[cid]->slice_nomute_metric[same_slice];
   }
   if (muteid == 0)
     fprintf(stderr, "metrics of muting cell0: ");
@@ -54,12 +53,13 @@ void schedulerContext::scheduleOneRBWithMute(int rbgid, int muteid,
       fprintf(stderr, "(%f, %f)", slice_metrics[sid],
               slice_metrics_nomute[sid]);
     if (slice_metrics[sid] > 0) {
-      assert(slice_metrics_nomute[sid] > 0);
       double benefit = slice_metrics[sid] - slice_metrics_nomute[sid];
       double cost = cell_slice_cost[muteid][sid];
       result->score += benefit / cost;
     }
   }
+  if (muteid == 0)
+    fprintf(stderr, "\n");
 }
 
 void schedulerContext::newTTI(unsigned int tti) {
@@ -77,6 +77,9 @@ void schedulerContext::newTTI(unsigned int tti) {
       std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
   std::vector<muteScheduleResult> mutecell_result(NB_CELLS);
   for (int rbgid = 0; rbgid < NB_RBGS; rbgid++) {
+    for (int cid = 0; cid < NB_CELLS; cid++) {
+      all_cells[cid]->calculateNoMutingMetric(rbgid);
+    }
     fprintf(stderr, "alloc_rbg: %d\n", rbgid);
     auto t3 = std::chrono::high_resolution_clock::now();
 
@@ -89,7 +92,6 @@ void schedulerContext::newTTI(unsigned int tti) {
     int final_mute = -1;
     muteScheduleResult final_result;
     final_result.score = 0;
-    double final_mute_benefit = 0;
     fprintf(stderr, "mute_scores: ");
     for (size_t i = 0; i < mutecell_result.size(); i++) {
       fprintf(stderr, " %f, ", mutecell_result[i].score);

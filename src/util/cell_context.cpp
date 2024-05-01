@@ -51,12 +51,6 @@ void cellContext::newTTI(unsigned int tti) {
   }
 }
 
-void cellContext::muteOneRBG(int rbgid, int mute_cell) {
-  for (int sid = 0; sid < nb_slices_; sid++) {
-    slices_[sid]->calcPFMetricOneRBG(rbgid, mute_cell);
-  }
-}
-
 void cellContext::calculateRBGsQuota() {
   for (int i = 0; i < nb_slices_; i++) {
     slice_rbgs_share_[i] =
@@ -72,6 +66,11 @@ void cellContext::calculateRBGsQuota() {
 
 void cellContext::assignOneRBG(int rbg_id, int mute_cell) {
   for (int sid = 0; sid < nb_slices_; sid++) {
+    // if a slice's quota is met, don't recompute pf-metric, etc
+    if ((double)slice_rbgs_allocated_[sid] > slice_rbgs_share_[sid]) {
+      continue;
+    }
+    slices_[sid]->calcPFMetricOneRBG(rbg_id, mute_cell);
     ueContext *ue = slices_[sid]->enterpriseSchedule(rbg_id, mute_cell);
     slice_cqi_[mute_cell + 1][sid] = ue->getCQI(rbg_id);
     slice_user_[mute_cell + 1][sid] = ue;
@@ -79,8 +78,7 @@ void cellContext::assignOneRBG(int rbg_id, int mute_cell) {
 }
 
 std::pair<int, ueContext *>
-cellContext::addScheduleMetric(vector<double> &slice_metric, int rbgid,
-                               int mute_cell) {
+cellContext::addScheduleMetric(double *slice_metric, int rbgid, int mute_cell) {
   // how do we deal with quota?
   uint8_t max_cqi = 0;
   int max_sliceid = -1;
@@ -108,6 +106,17 @@ cellContext::addScheduleMetric(vector<double> &slice_metric, int rbgid,
 double cellContext::getScheduleMetricGivenSid(int sid, int rbgid) {
   ueContext *ue = slices_[sid]->enterpriseSchedule(rbgid);
   return ue->getRankingMetric(rbgid);
+}
+
+void cellContext::calculateNoMutingMetric(int rbgid) {
+  for (int sid = 0; sid < nb_slices_; sid++) {
+    if (double(slice_rbgs_allocated_[sid] > slice_rbgs_share_[sid])) {
+      continue;
+    }
+    slices_[sid]->calcPFMetricOneRBG(rbgid, -1);
+    ueContext *ue = slices_[sid]->enterpriseSchedule(rbgid, -1);
+    slice_nomute_metric[sid] = ue->getRankingMetric(rbgid, -1);
+  }
 }
 
 int cellContext::doAllocation(int rbgid, int mute_cell) {
