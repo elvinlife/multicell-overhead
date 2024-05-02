@@ -44,8 +44,6 @@ cellContext::~cellContext() {
 }
 
 void cellContext::newTTI(unsigned int tti) {
-  fprintf(stderr, "cell(%d), newTTI(%u) inter-slice scheduler\n", cell_id_,
-          tti);
   for (int i = 0; i < nb_slices_; ++i) {
     slices_[i]->newTTI(tti);
   }
@@ -148,11 +146,15 @@ void cellContext::getAvgCost(vector<double> &cell_slice_cost) {
         max_sid = sid;
       }
     }
+    assert(max_sid != -1);
     ueContext *ue = slice_user_[0][max_sid];
     slice_rbgs_allocated_[max_sid] += 1;
     cell_slice_cost[max_sid] += ue->getRankingMetric(rbgid);
   }
   for (size_t sid = 0; sid < cell_slice_cost.size(); sid++) {
-    cell_slice_cost[sid] /= (double)slice_rbgs_allocated_[sid];
+    if (slice_rbgs_allocated_[sid] > 0)
+      cell_slice_cost[sid] /= (double)slice_rbgs_allocated_[sid];
+    else
+      cell_slice_cost[sid] = DEFAULT_COST;
   }
 }

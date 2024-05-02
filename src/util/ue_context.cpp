@@ -43,8 +43,8 @@ void ueContext::updateThroughput(unsigned int tti) {
     int throughput = get_tbs_from_mcs(mcs, rbgs_allocated_.size());
     ewma_throughput_ = beta_ * throughput + (1 - beta_) * ewma_throughput_;
   }
-  if (ewma_throughput_ < 0.1)
-    ewma_throughput_ = 0.1;
+  if (ewma_throughput_ < 1)
+    ewma_throughput_ = 1;
   rbgs_allocated_.clear();
 }
 

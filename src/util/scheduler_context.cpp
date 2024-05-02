@@ -10,7 +10,7 @@
 schedulerContext::schedulerContext(int nb_slices, int ues_per_slice)
     : nb_slices_(nb_slices) {
   for (int cid = 0; cid < NB_CELLS; cid++) {
-    vector<double> slice_cost(nb_slices);
+    vector<double> slice_cost(nb_slices, DEFAULT_COST);
     cell_slice_cost.push_back(slice_cost);
     all_cells[cid] = new cellContext(nb_slices, ues_per_slice, cid);
   }
@@ -100,7 +100,7 @@ void schedulerContext::newTTI(unsigned int tti) {
   auto t1 = std::chrono::high_resolution_clock::now();
   for (int cid = 0; cid < NB_CELLS; cid++) {
     all_cells[cid]->newTTI(tti);
-    all_cells[cid]->getAvgCost(cell_slice_cost[cid]);
+    all_cells[cid]->getAvgCost(std::ref(cell_slice_cost[cid]));
   }
   // recalculate the quota
   for (int cid = 0; cid < NB_CELLS; cid++) {
@@ -122,19 +122,16 @@ void schedulerContext::newTTI(unsigned int tti) {
     auto t4 = std::chrono::high_resolution_clock::now();
     total_time_t2_ +=
         std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count();
+    // begin with no muting
     int final_mute = -1;
-    muteScheduleResult final_result;
-    final_result.score = 0;
+    muteScheduleResult final_result = mutecell_result[NB_CELLS];
     fprintf(stderr, "mute_scores: ");
-    for (size_t i = 0; i < mutecell_result.size(); i++) {
+    for (size_t i = 0; i < NB_CELLS; i++) {
       fprintf(stderr, " %f, ", mutecell_result[i].score);
       if (mutecell_result[i].score > final_result.score) {
         final_result = mutecell_result[i];
         final_mute = (int)i;
       }
-    }
-    if (final_mute == NB_CELLS) {
-      final_mute = -1;
     }
     fprintf(stderr, "\n");
     // do the final allocation with determined muted cell
