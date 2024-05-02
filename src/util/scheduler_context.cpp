@@ -3,12 +3,10 @@
 #include "util.h"
 #include <cassert>
 #include <chrono>
-#include <mutex>
-#include <ratio>
 #include <unordered_set>
 
 schedulerContext::schedulerContext(int nb_slices, int ues_per_slice)
-    : nb_slices_(nb_slices) {
+    : nb_slices_(nb_slices), threadpool_(NB_CELLS) {
   for (int cid = 0; cid < NB_CELLS; cid++) {
     vector<double> slice_cost(nb_slices, DEFAULT_COST);
     cell_slice_cost.push_back(slice_cost);
@@ -117,7 +115,12 @@ void schedulerContext::newTTI(unsigned int tti) {
 
     auto t3 = std::chrono::high_resolution_clock::now();
     for (int muteid = 0; muteid < NB_CELLS; muteid++) {
-      scheduleOneRBWithMute(rbgid, muteid, &mutecell_result[muteid]);
+      threadpool_.JobEnqueue(std::bind(&schedulerContext::scheduleOneRBWithMute,
+                                       this, rbgid, muteid,
+                                       &mutecell_result[muteid]));
+      // scheduleOneRBWithMute(rbgid, muteid, &mutecell_result[muteid]);
+    }
+    while (threadpool_.IsBusy()) {
     }
     auto t4 = std::chrono::high_resolution_clock::now();
     total_time_t2_ +=
