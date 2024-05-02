@@ -3,9 +3,9 @@
 #include "util.h"
 #include <cassert>
 #include <chrono>
-#include <mutex>
-#include <ratio>
 #include <unordered_set>
+
+// #define PROFILE_RUNTIME
 
 schedulerContext::schedulerContext(int nb_slices, int ues_per_slice)
     : nb_slices_(nb_slices) {
@@ -97,7 +97,9 @@ void schedulerContext::scheduleOneRBWithMute(int rbgid, int muteid,
 }
 
 void schedulerContext::newTTI(unsigned int tti) {
+#ifdef PROFILE_RUNTIME
   auto t1 = std::chrono::high_resolution_clock::now();
+#endif
   for (int cid = 0; cid < NB_CELLS; cid++) {
     all_cells[cid]->newTTI(tti);
     all_cells[cid]->getAvgCost(std::ref(cell_slice_cost[cid]));
@@ -106,22 +108,28 @@ void schedulerContext::newTTI(unsigned int tti) {
   for (int cid = 0; cid < NB_CELLS; cid++) {
     all_cells[cid]->calculateRBGsQuota();
   }
+#ifdef PROFILE_RUNTIME
   auto t2 = std::chrono::high_resolution_clock::now();
   total_time_t1_ +=
       std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+#endif
   std::vector<muteScheduleResult> mutecell_result(NB_CELLS + 1);
   for (int rbgid = 0; rbgid < NB_RBGS; rbgid++) {
     fprintf(stderr, "alloc_rbg: %d\n", rbgid);
     // call scheduling without muting first, get the cell_to_slice pf metrics
     scheduleOneRBNoMute(rbgid, &mutecell_result[NB_CELLS]);
 
+#ifdef PROFILE_RUNTIME
     auto t3 = std::chrono::high_resolution_clock::now();
+#endif
     for (int muteid = 0; muteid < NB_CELLS; muteid++) {
       scheduleOneRBWithMute(rbgid, muteid, &mutecell_result[muteid]);
     }
+#ifdef PROFILE_RUNTIME
     auto t4 = std::chrono::high_resolution_clock::now();
     total_time_t2_ +=
         std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count();
+#endif
     // begin with no muting
     int final_mute = -1;
     muteScheduleResult final_result = mutecell_result[NB_CELLS];
@@ -154,8 +162,10 @@ void schedulerContext::newTTI(unsigned int tti) {
         all_cells[final_mute]->slice_rbgs_share_[*it] -=
             1.0 / slices_benefit.size();
       }
+#ifdef PROFILE_RUNTIME
     auto t5 = std::chrono::high_resolution_clock::now();
     total_time_t3_ +=
         std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4).count();
+#endif
   }
 }
