@@ -8,6 +8,8 @@
 #define NB_CELLS 5
 #define MAX_SLICES 10
 #define DEFAULT_COST 100
+// #define DEBUG_LOG
+// #define PROFILE_RUNTIME
 
 static std::string trace_dir =
     "/home/yc28/Research/RadioSaber/cqi-traces-noise0/";

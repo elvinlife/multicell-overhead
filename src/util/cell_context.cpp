@@ -55,11 +55,13 @@ void cellContext::calculateRBGsQuota() {
         slices_[i]->getWeight() * NB_RBGS + slice_rbgs_offset_[i];
   }
   memset(slice_rbgs_allocated_, 0, nb_slices_ * sizeof(int8_t));
+#ifdef DEBUG_LOG
   fprintf(stderr, "slice_share: ");
   for (int i = 0; i < nb_slices_; i++) {
     fprintf(stderr, "%d(%f); ", i, slice_rbgs_share_[i]);
   }
   fprintf(stderr, "\n");
+#endif
 }
 
 void cellContext::callEnterpriseSched(int rbg_id, int mute_cell) {
@@ -84,12 +86,16 @@ cellContext::callInterSliceSched(double *slice_metric, int rbgid,
   // how do we deal with quota?
   uint8_t max_cqi = 0;
   int max_sliceid = -1;
+#ifdef DEBUG_LOG
   if (cell_id_ == 0)
     fprintf(stderr, "(%d)rbgs_allocated, rbgs_share: ", cell_id_);
+#endif
   for (int sid = 0; sid < nb_slices_; sid++) {
+#ifdef DEBUG_LOG
     if (cell_id_ == 0)
       fprintf(stderr, "(%u %f) ", slice_rbgs_allocated_[sid],
               slice_rbgs_share_[sid]);
+#endif
     if ((double)slice_rbgs_allocated_[sid] >= slice_rbgs_share_[sid])
       continue;
     if (slice_cqi_[mute_cell + 1][sid] >= max_cqi) {
@@ -97,8 +103,10 @@ cellContext::callInterSliceSched(double *slice_metric, int rbgid,
       max_sliceid = sid;
     }
   }
+#ifdef DEBUG_LOG
   if (cell_id_ == 0)
     fprintf(stderr, " final_slice: %d \n", max_sliceid);
+#endif
   assert(max_sliceid != -1);
   ueContext *ue = slice_user_[mute_cell + 1][max_sliceid];
   slice_metric[max_sliceid] += ue->getRankingMetric(rbgid, mute_cell);
@@ -119,7 +127,6 @@ int cellContext::doAllocation(int rbgid, int mute_cell) {
   ueContext *ue = slice_user_[mute_cell + 1][max_sliceid];
   ue->allocateRBG(rbgid);
   slice_rbgs_allocated_[max_sliceid] += 1;
-  // fprintf(stderr, "cell: %d final_slice: %d\n", cell_id_, max_sliceid);
   return max_sliceid;
 }
 

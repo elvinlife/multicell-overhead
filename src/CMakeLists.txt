@@ -15,7 +15,7 @@ add_executable(test_util test_util.cpp)
 add_executable(radiosaber main.cpp)
 
 # add the flags
-set(DEBUGFLAGS "-Wall -g -O2 -pthread")
+set(DEBUGFLAGS "-Wall -g -O2 -pthread -DDEBUG_LOG")
 set(RELEASEFLAGS "-O3 -Wall -g")
 
 target_link_libraries(test_util PUBLIC util)
