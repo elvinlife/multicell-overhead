@@ -6,8 +6,8 @@
 #include "util.h"
 
 struct muteScheduleResult {
-  double score;
-  ueContext *ues[NB_CELLS];
+  double score = -1;
+  ueContext *ues_scheduled[NB_CELLS];
   int slices_benefit[NB_CELLS];
 };
 
@@ -20,6 +20,7 @@ private:
 public:
   schedulerContext(int nb_slices, int ues_per_slice);
   ~schedulerContext();
+  void scheduleOneRBNoMute(int rbgid, muteScheduleResult *result);
   void scheduleOneRBWithMute(int rbgid, int muteid, muteScheduleResult *result);
   void newTTI(unsigned int tti);
   long long total_time_t1_ = 0;

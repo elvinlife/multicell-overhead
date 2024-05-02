@@ -28,14 +28,10 @@ public:
   void calculateRBGsQuota();
   // add the metric after the enterprise schedulers finish, return the
   // @slice_id who gets the @rbgid
-  std::pair<int, ueContext *> addScheduleMetric(double *, int rbgid,
-                                                int mute_cell);
-  // with the constraint that @sid must be given rbgid, get the metric
-  double getScheduleMetricGivenSid(int sid, int rbgid);
-
-  void calculateNoMutingMetric(int rbgid);
+  std::pair<int, ueContext *> callInterSliceSched(double *, int rbgid,
+                                                  int mute_cell);
   // for one rbg, check which user is scheduled for every slice
-  void assignOneRBG(int rbg_id, int mute_cell);
+  void callEnterpriseSched(int rbg_id, int mute_cell);
 
   // do the real allocation, update quota, and return the @slice_id
   // who gets the @rbgid

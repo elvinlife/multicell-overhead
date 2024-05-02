@@ -17,7 +17,7 @@ ueContext::ueContext(int ue_id, int trace_id)
   trace_ttis_ = MAX_TRACE_TTIS;
   for (int i = 0; i < MAX_TRACE_TTIS; i++) {
     for (int j = 0; j < NB_RBGS; j++) {
-      subband_cqis_trace_[i][j] = 6;
+      subband_cqis_trace_[i][j] = rand() % 6 + 4;
     }
   }
 }
