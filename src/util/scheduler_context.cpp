@@ -66,7 +66,7 @@ void schedulerContext::scheduleOneRBWithMute(int rbgid, int muteid,
     if (benefit > 0.0001) {
       slices_benefit[sid] = benefit;
       if (muteid == 0) {
-        fprintf(stderr, "sid %d benefit %f cost %f", sid, slices_benefit[sid],
+        fprintf(stderr, "sid %d benefit %f cost %f ", sid, slices_benefit[sid],
                 cell_slice_cost[muteid][sid]);
       }
     }
