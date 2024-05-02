@@ -56,22 +56,28 @@ void schedulerContext::scheduleOneRBWithMute(int rbgid, int muteid,
     slice_metrics_nomute[same_slice] +=
         all_cells[cid]->slice_nomute_metric[same_slice];
   }
+#ifdef DEBUG_LOG
   if (muteid == 0)
     fprintf(stderr, "metrics of muting cell0: ");
+#endif
   std::unordered_map<int, double> slices_benefit;
   for (int sid = 0; sid < nb_slices_; sid++) {
     double benefit = slice_metrics[sid] - slice_metrics_nomute[sid];
     if (benefit > 0.0001) {
       slices_benefit[sid] = benefit;
+#ifdef DEBUG_LOG
       if (muteid == 0) {
         fprintf(stderr, "sid %d benefit %f cost %f ", sid, slices_benefit[sid],
                 cell_slice_cost[muteid][sid]);
       }
+#endif
     }
   }
+#ifdef DEBUG_LOG
   if (muteid == 0) {
     fprintf(stderr, "\n");
   }
+#endif
   while (slices_benefit.size() > 0) {
     bool allslices_work = true;
     for (auto it = slices_benefit.begin(); it != slices_benefit.end(); it++) {
@@ -90,12 +96,12 @@ void schedulerContext::scheduleOneRBWithMute(int rbgid, int muteid,
     result->score += it->second / (cell_slice_cost[muteid][it->first] /
                                    slices_benefit.size());
   }
-  if (muteid == 0)
-    fprintf(stderr, "\n");
 }
 
 void schedulerContext::newTTI(unsigned int tti) {
+#ifdef PROFILE_RUNTIME
   auto t1 = std::chrono::high_resolution_clock::now();
+#endif
   for (int cid = 0; cid < NB_CELLS; cid++) {
     all_cells[cid]->newTTI(tti);
     all_cells[cid]->getAvgCost(std::ref(cell_slice_cost[cid]));
@@ -104,16 +110,22 @@ void schedulerContext::newTTI(unsigned int tti) {
   for (int cid = 0; cid < NB_CELLS; cid++) {
     all_cells[cid]->calculateRBGsQuota();
   }
+#ifdef PROFILE_RUNTIME
   auto t2 = std::chrono::high_resolution_clock::now();
   total_time_t1_ +=
       std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+#endif
   std::vector<muteScheduleResult> mutecell_result(NB_CELLS + 1);
   for (int rbgid = 0; rbgid < NB_RBGS; rbgid++) {
+#ifdef DEBUG_LOG
     fprintf(stderr, "alloc_rbg: %d\n", rbgid);
+#endif
     // call scheduling without muting first, get the cell_to_slice pf metrics
     scheduleOneRBNoMute(rbgid, &mutecell_result[NB_CELLS]);
 
+#ifdef PROFILE_RUNTIME
     auto t3 = std::chrono::high_resolution_clock::now();
+#endif
     for (int muteid = 0; muteid < NB_CELLS; muteid++) {
       threadpool_.JobEnqueue(std::bind(&schedulerContext::scheduleOneRBWithMute,
                                        this, rbgid, muteid,
@@ -122,21 +134,29 @@ void schedulerContext::newTTI(unsigned int tti) {
     }
     while (threadpool_.IsBusy()) {
     }
+#ifdef PROFILE_RUNTIME
     auto t4 = std::chrono::high_resolution_clock::now();
     total_time_t2_ +=
         std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count();
+#endif
     // begin with no muting
     int final_mute = -1;
     muteScheduleResult final_result = mutecell_result[NB_CELLS];
+#ifdef DEBUG_LOG
     fprintf(stderr, "mute_scores: ");
+#endif
     for (size_t i = 0; i < NB_CELLS; i++) {
+#ifdef DEBUG_LOG
       fprintf(stderr, " %f, ", mutecell_result[i].score);
+#endif
       if (mutecell_result[i].score > final_result.score) {
         final_result = mutecell_result[i];
         final_mute = (int)i;
       }
     }
+#ifdef DEBUG_LOG
     fprintf(stderr, "\n");
+#endif
     // do the final allocation with determined muted cell
     std::unordered_set<int> slices_benefit;
     for (int cid = 0; cid < NB_CELLS; cid++) {
@@ -149,16 +169,20 @@ void schedulerContext::newTTI(unsigned int tti) {
       ue_alloc->allocateRBG(rbgid);
       all_cells[cid]->slice_rbgs_allocated_[slice_alloc] += 1;
     }
+#ifdef DEBUG_LOG
     fprintf(stderr, "final_mute: %d nb_benefits: %lu\n", final_mute,
             slices_benefit.size());
+#endif
     // deduct the quota of benefited slices in the muted cell
     if (final_mute != -1)
       for (auto it = slices_benefit.begin(); it != slices_benefit.end(); it++) {
         all_cells[final_mute]->slice_rbgs_share_[*it] -=
             1.0 / slices_benefit.size();
       }
+#ifdef PROFILE_RUNTIME
     auto t5 = std::chrono::high_resolution_clock::now();
     total_time_t3_ +=
         std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4).count();
+#endif
   }
 }
