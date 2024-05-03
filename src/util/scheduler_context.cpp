@@ -56,6 +56,7 @@ void schedulerContext::scheduleOneRBWithMute(int rbgid, int muteid,
     slice_metrics_nomute[same_slice] +=
         all_cells[cid]->slice_nomute_metric[same_slice];
   }
+  all_cells[muteid]->getAvgCost(std::ref(cell_slice_cost[muteid]), rbgid);
 #ifdef DEBUG_LOG
   if (muteid == 0)
     fprintf(stderr, "metrics of muting cell0: ");
@@ -104,7 +105,6 @@ void schedulerContext::newTTI(unsigned int tti) {
 #endif
   for (int cid = 0; cid < NB_CELLS; cid++) {
     all_cells[cid]->newTTI(tti);
-    all_cells[cid]->getAvgCost(std::ref(cell_slice_cost[cid]));
   }
   // recalculate the quota
   for (int cid = 0; cid < NB_CELLS; cid++) {

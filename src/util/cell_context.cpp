@@ -1,6 +1,7 @@
 #include "cell_context.h"
 #include "ue_context.h"
 #include "util.h"
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
@@ -130,13 +131,12 @@ int cellContext::doAllocation(int rbgid, int mute_cell) {
   return max_sliceid;
 }
 
-void cellContext::getAvgCost(vector<double> &cell_slice_cost) {
-  for (int i = 0; i < nb_slices_; i++) {
-    slice_rbgs_share_[i] = slices_[i]->getWeight() * NB_RBGS;
-  }
-  memset(slice_rbgs_allocated_, 0, nb_slices_ * sizeof(int8_t));
+void cellContext::getAvgCost(vector<double> &cell_slice_cost, int muted_rbg) {
+  int8_t rbgs_alloc_backup[MAX_SLICES];
+  memcpy(rbgs_alloc_backup, slice_rbgs_allocated_, nb_slices_ * sizeof(int8_t));
+  std::fill(cell_slice_cost.begin(), cell_slice_cost.end(), 0);
 
-  for (int rbgid = 0; rbgid < NB_RBGS; rbgid++) {
+  for (int rbgid = muted_rbg + 1; rbgid < NB_RBGS; rbgid++) {
     for (int sid = 0; sid < nb_slices_; sid++) {
       ueContext *ue = slices_[sid]->enterpriseSchedule(rbgid);
       slice_cqi_[0][sid] = ue->getCQI(rbgid);
@@ -159,9 +159,11 @@ void cellContext::getAvgCost(vector<double> &cell_slice_cost) {
     cell_slice_cost[max_sid] += ue->getRankingMetric(rbgid);
   }
   for (size_t sid = 0; sid < cell_slice_cost.size(); sid++) {
-    if (slice_rbgs_allocated_[sid] > 0)
-      cell_slice_cost[sid] /= (double)slice_rbgs_allocated_[sid];
+    int rbgs_alloc = slice_rbgs_allocated_[sid] - rbgs_alloc_backup[sid];
+    if (rbgs_alloc > 0)
+      cell_slice_cost[sid] /= (double)rbgs_alloc;
     else
       cell_slice_cost[sid] = DEFAULT_COST;
   }
+  memcpy(slice_rbgs_allocated_, rbgs_alloc_backup, nb_slices_ * sizeof(int8_t));
 }
