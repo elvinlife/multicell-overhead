@@ -36,7 +36,8 @@ public:
   // do the real allocation, update quota, and return the @slice_id
   // who gets the @rbgid
   int doAllocation(int rbgid, int mute_cell);
-  void getAvgCost(vector<double> &, int begin_rbg);
+  void getSumMetric(vector<double> &, int begin_rbg, bool is_avg,
+                    int mute_cell = -1);
   void newTTI(unsigned int tti);
 };
 

@@ -14,7 +14,7 @@ struct muteScheduleResult {
 class schedulerContext {
 private:
   cellContext *all_cells[NB_CELLS];
-  vector<vector<double>> cell_slice_cost;
+  vector<vector<double>> cell_slice_metric;
   int nb_slices_;
 
 public:

@@ -3,13 +3,14 @@
 #include "util.h"
 #include <cassert>
 #include <chrono>
+#include <cstring>
 #include <unordered_set>
 
 schedulerContext::schedulerContext(int nb_slices, int ues_per_slice)
     : nb_slices_(nb_slices) {
   for (int cid = 0; cid < NB_CELLS; cid++) {
     vector<double> slice_cost(nb_slices, DEFAULT_COST);
-    cell_slice_cost.push_back(slice_cost);
+    cell_slice_metric.push_back(slice_cost);
     all_cells[cid] = new cellContext(nb_slices, ues_per_slice, cid);
   }
 }
@@ -34,42 +35,53 @@ void schedulerContext::scheduleOneRBNoMute(int rbgid,
 
 void schedulerContext::scheduleOneRBWithMute(int rbgid, int muteid,
                                              muteScheduleResult *result) {
+  result->score = 0;
   double slice_metrics[MAX_SLICES];
   double slice_metrics_nomute[MAX_SLICES];
-  int cell_to_slice[NB_CELLS];
-  result->score = 0;
+  memset(slice_metrics, 0, sizeof(double) * MAX_SLICES);
+  memset(slice_metrics_nomute, 0, sizeof(double) * MAX_SLICES);
+  vector<double> mutecell_avg_metric(nb_slices_);
+  // get the sum metric without muting in other cells
   for (int cid = 0; cid < NB_CELLS; cid++) {
-    if (cid == muteid)
-      continue;
-    all_cells[cid]->callEnterpriseSched(rbgid, muteid);
-    auto it = all_cells[cid]->callInterSliceSched(slice_metrics, rbgid, muteid);
-    cell_to_slice[cid] = it.first;
-    result->slices_benefit[cid] = it.first;
-    result->ues_scheduled[cid] = it.second;
+    if (cid != muteid) {
+      all_cells[cid]->getSumMetric(std::ref(cell_slice_metric[cid]), rbgid,
+                                   false);
+    }
+    for (int sid = 0; sid < nb_slices_; sid++) {
+      slice_metrics_nomute[sid] += cell_slice_metric[cid][sid];
+    }
   }
-  // with the same slice constraint(under no muting) this can be optimized, we
-  // can calculate which user is scheduled in nomuting assumption
+  // get the sum metric with muting
   for (int cid = 0; cid < NB_CELLS; cid++) {
-    if (cid == muteid)
-      continue;
-    int same_slice = cell_to_slice[cid];
-    slice_metrics_nomute[same_slice] +=
-        all_cells[cid]->slice_nomute_metric[same_slice];
+    if (cid != muteid) {
+      all_cells[cid]->getSumMetric(std::ref(cell_slice_metric[cid]), rbgid,
+                                   false, muteid);
+    }
+    for (int sid = 0; sid < nb_slices_; sid++) {
+      slice_metrics[sid] += cell_slice_metric[cid][sid];
+    }
   }
-  all_cells[muteid]->getAvgCost(std::ref(cell_slice_cost[muteid]), rbgid);
+  all_cells[muteid]->getSumMetric(mutecell_avg_metric, rbgid + 1, true);
+  // get the slices who benefit
 #ifdef DEBUG_LOG
   if (muteid == 0)
     fprintf(stderr, "metrics of muting cell0: ");
 #endif
   std::unordered_map<int, double> slices_benefit;
-  for (int sid = 0; sid < nb_slices_; sid++) {
-    double benefit = slice_metrics[sid] - slice_metrics_nomute[sid];
-    if (benefit > 0.0001) {
-      slices_benefit[sid] = benefit;
+  for (int cid = 0; cid < NB_CELLS; cid++) {
+    if (cid != muteid) {
+      all_cells[cid]->callEnterpriseSched(rbgid, muteid);
+      auto it =
+          all_cells[cid]->callInterSliceSched(slice_metrics, rbgid, muteid);
+      int slice_benefit = it.first;
+      result->slices_benefit[cid] = slice_benefit;
+      result->ues_scheduled[cid] = it.second;
+      slices_benefit[slice_benefit] =
+          slice_metrics[slice_benefit] - slice_metrics_nomute[slice_benefit];
 #ifdef DEBUG_LOG
       if (muteid == 0) {
-        fprintf(stderr, "sid %d benefit %f cost %f ", sid, slices_benefit[sid],
-                cell_slice_cost[muteid][sid]);
+        fprintf(stderr, "sid %d benefit %f cost %f ", slice_benefit,
+                slices_benefit[slice_benefit], mutecell_metric[slice_benefit]);
       }
 #endif
     }
@@ -83,8 +95,7 @@ void schedulerContext::scheduleOneRBWithMute(int rbgid, int muteid,
     bool allslices_work = true;
     for (auto it = slices_benefit.begin(); it != slices_benefit.end(); it++) {
       // remove if a slice cannot pay for his benefit
-      if (it->second <
-          cell_slice_cost[muteid][it->first] / slices_benefit.size()) {
+      if (it->second < mutecell_avg_metric[it->first] / slices_benefit.size()) {
         slices_benefit.erase(it->first);
         allslices_work = false;
         break;
@@ -94,8 +105,8 @@ void schedulerContext::scheduleOneRBWithMute(int rbgid, int muteid,
       break;
   }
   for (auto it = slices_benefit.begin(); it != slices_benefit.end(); it++) {
-    result->score += it->second / (cell_slice_cost[muteid][it->first] /
-                                   slices_benefit.size());
+    result->score +=
+        it->second / (mutecell_avg_metric[it->first] / slices_benefit.size());
   }
 }
 

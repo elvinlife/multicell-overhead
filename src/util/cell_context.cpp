@@ -131,16 +131,26 @@ int cellContext::doAllocation(int rbgid, int mute_cell) {
   return max_sliceid;
 }
 
-void cellContext::getAvgCost(vector<double> &cell_slice_cost, int muted_rbg) {
+void cellContext::getSumMetric(vector<double> &cell_slice_metric, int begin_rbg,
+                               bool is_avg, int mute_cell) {
+  if (begin_rbg >= NB_RBGS) {
+    return;
+  }
   int8_t rbgs_alloc_backup[MAX_SLICES];
   memcpy(rbgs_alloc_backup, slice_rbgs_allocated_, nb_slices_ * sizeof(int8_t));
-  std::fill(cell_slice_cost.begin(), cell_slice_cost.end(), 0);
+  std::fill(cell_slice_metric.begin(), cell_slice_metric.end(), 0);
 
-  for (int rbgid = muted_rbg + 1; rbgid < NB_RBGS; rbgid++) {
+  for (int rbgid = begin_rbg; rbgid < NB_RBGS; rbgid++) {
     for (int sid = 0; sid < nb_slices_; sid++) {
-      ueContext *ue = slices_[sid]->enterpriseSchedule(rbgid);
-      slice_cqi_[0][sid] = ue->getCQI(rbgid);
-      slice_user_[0][sid] = ue;
+      if (rbgid == begin_rbg && mute_cell != -1) {
+        ueContext *ue = slices_[sid]->enterpriseSchedule(rbgid, mute_cell);
+        slice_cqi_[0][sid] = ue->getCQI(rbgid);
+        slice_user_[0][sid] = ue;
+      } else {
+        ueContext *ue = slices_[sid]->enterpriseSchedule(rbgid);
+        slice_cqi_[0][sid] = ue->getCQI(rbgid);
+        slice_user_[0][sid] = ue;
+      }
     }
 
     uint8_t max_cqi = 0;
@@ -156,14 +166,16 @@ void cellContext::getAvgCost(vector<double> &cell_slice_cost, int muted_rbg) {
     assert(max_sid != -1);
     ueContext *ue = slice_user_[0][max_sid];
     slice_rbgs_allocated_[max_sid] += 1;
-    cell_slice_cost[max_sid] += ue->getRankingMetric(rbgid);
+    cell_slice_metric[max_sid] += ue->getRankingMetric(rbgid);
   }
-  for (size_t sid = 0; sid < cell_slice_cost.size(); sid++) {
-    int rbgs_alloc = slice_rbgs_allocated_[sid] - rbgs_alloc_backup[sid];
-    if (rbgs_alloc > 0)
-      cell_slice_cost[sid] /= (double)rbgs_alloc;
-    else
-      cell_slice_cost[sid] = DEFAULT_COST;
+  if (is_avg) {
+    for (size_t sid = 0; sid < cell_slice_metric.size(); sid++) {
+      int rbgs_alloc = slice_rbgs_allocated_[sid] - rbgs_alloc_backup[sid];
+      if (rbgs_alloc > 0) {
+        cell_slice_metric[sid] /= (double)rbgs_alloc;
+      }
+    }
   }
+
   memcpy(slice_rbgs_allocated_, rbgs_alloc_backup, nb_slices_ * sizeof(int8_t));
 }
