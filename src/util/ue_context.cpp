@@ -14,23 +14,11 @@ int ueContext::cqi_report_period_ = 40;
 
 ueContext::ueContext(int ue_id, int trace_id)
     : ue_id_(ue_id), trace_ttis_(0), ewma_throughput_(0) {
-  std::string trace_fname =
-      trace_dir + "ue" + std::to_string(trace_id) + ".log";
-  std::ifstream ifs(trace_fname, std::ifstream::in);
-  int cqi = 0;
-  trace_ttis_ = 0;
-  std::string line;
-  while (std::getline(ifs, line)) {
-    std::istringstream iss(line);
-    for (int i = 0; i < 512; ++i) {
-      iss >> cqi;
-      if (i % (RBS_PER_RBG * 4) == 0) {
-        // subband_cqis_trace_[trace_ttis_][i / (RBS_PER_RBG * 4)] =
-        // (uint8_t)cqi;
-        subband_cqis_trace_[trace_ttis_][i / (RBS_PER_RBG * 4)] = 6;
-      }
+  trace_ttis_ = MAX_TRACE_TTIS;
+  for (int i = 0; i < MAX_TRACE_TTIS; i++) {
+    for (int j = 0; j < NB_RBGS; j++) {
+      subband_cqis_trace_[i][j] = rand() % 6 + 4;
     }
-    trace_ttis_ += 1;
   }
 }
 
@@ -55,8 +43,8 @@ void ueContext::updateThroughput(unsigned int tti) {
     int throughput = get_tbs_from_mcs(mcs, rbgs_allocated_.size());
     ewma_throughput_ = beta_ * throughput + (1 - beta_) * ewma_throughput_;
   }
-  if (ewma_throughput_ < 0.1)
-    ewma_throughput_ = 0.1;
+  if (ewma_throughput_ < 1)
+    ewma_throughput_ = 1;
   rbgs_allocated_.clear();
 }
 
@@ -64,7 +52,7 @@ void ueContext::calcPFMetricAll() {
   // default PF
   for (int i = 0; i < NB_RBGS; i++) {
     int tbs = get_tbs_from_mcs(get_mcs_from_cqi(subband_cqis_[i]), 1);
-    sched_metrics_[i] = tbs / ewma_throughput_;
+    sched_metrics_[0][i] = tbs / ewma_throughput_;
   }
 }
 
@@ -76,23 +64,5 @@ void ueContext::calcPFMetricOneRB(int rbgid, int mute_cell) {
       cqi = 15;
   }
   int tbs = get_tbs_from_mcs(get_mcs_from_cqi(cqi), 1);
-  sched_metrics_[rbgid] = tbs / ewma_throughput_;
+  sched_metrics_[mute_cell + 1][rbgid] = tbs / ewma_throughput_;
 }
-
-/*
-inline void ueContext::allocateRBG(int rbg_id) {
-  // let's not update the metric currently
-  // int bw_kbps = get_tbs_from_mcs(
-  //   get_mcs_from_cqi( subband_cqis_[rbg_id] ), 1
-  // );
-  // ewma_throughput_ += beta_ * bw_kbps;
-  // for (int i = 0; i < NB_RBGS; i++) {
-  //   int tbs = get_tbs_from_mcs(
-  //     get_mcs_from_cqi(subband_cqis_[i]), 1
-  //   );
-  //   sched_metrics_[i] = tbs / ewma_throughput_;
-  // }
-
-  rbgs_allocated_.push_back(rbg_id);
-}
-*/

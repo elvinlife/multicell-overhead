@@ -2,17 +2,19 @@
 #include "util.h"
 #include "util/cell_context.h"
 #include "util/scheduler_context.h"
+#include "util/util.h"
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <pthread.h>
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
     throw std::runtime_error("./radiosaber [num_slices] [num_users_per_slice]");
   }
   int num_slices = atoi(argv[1]);
-  if (num_slices > 40) {
+  if (num_slices > MAX_SLICES) {
     throw std::runtime_error("Maximal number of slices is 40");
   }
   // bind to core 0
@@ -33,10 +35,10 @@ int main(int argc, char *argv[]) {
   long long microseconds =
       std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
   std::cout << "avg_time(us): " << microseconds / total_tti << std::endl;
-  // std::cout << "time_t1(us): " << scheduler.total_time_t1_ / total_tti
-  //           << std::endl;
-  // std::cout << "time_t2(us): " << scheduler.total_time_t2_ / total_tti
-  //           << std::endl;
-  // std::cout << "time_t3(us): " << scheduler.total_time_t3_ / total_tti
-  //           << std::endl;
+  std::cout << "time_t1(us): " << scheduler.total_time_t1_ / total_tti
+            << std::endl;
+  std::cout << "time_t2(us): " << scheduler.total_time_t2_ / total_tti
+            << std::endl;
+  std::cout << "time_t3(us): " << scheduler.total_time_t3_ / total_tti
+            << std::endl;
 }

@@ -23,11 +23,11 @@ public:
   // calculate metrics of all ues for all rbgs
   void newTTI(unsigned int tti);
 
-  void calcPFMetricOneRBG(int rbgid, int mute_cell);
+  void calcPFMetricOneRBG(int rbgid, int mute_cell = -1);
 
   // compare the available metrics of all ues w.r.t the rbg_id
   // return the scheduled ue context
-  ueContext *enterpriseSchedule(int rbg_id);
+  ueContext *enterpriseSchedule(int rbg_id, int mute_cell = -1);
 
   inline int getSliceID() { return slice_id_; }
   inline double getWeight() { return weight_; }

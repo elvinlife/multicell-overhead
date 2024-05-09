@@ -1,11 +1,11 @@
 #ifndef UE_CONTEXT_H_
 #define UE_CONTEXT_H_
 
-#define MAX_SLICES 40
 #define MAX_TRACE_TTIS 500
 #define NB_RBGS 32
 #define RBS_PER_RBG 4
 
+#include "util.h"
 #include <cstdint>
 #include <vector>
 using std::vector;
@@ -20,7 +20,10 @@ private:
   double ewma_throughput_;
   uint8_t subband_cqis_[NB_RBGS];
   uint8_t subband_cqis_trace_[MAX_TRACE_TTIS][NB_RBGS];
-  double sched_metrics_[NB_RBGS];
+  // if a cell @i is muted, we calculate a sched_metric in
+  // sched_metrics[i+1][RBGID] if no cell is muted(muteid = -1), the metric is
+  // stored in sched_metrics[0][rbgid]
+  double sched_metrics_[NB_CELLS + 1][NB_RBGS];
   vector<int> rbgs_allocated_;
 
 public:
@@ -34,7 +37,7 @@ public:
   // calculate the user metric of all rbgs and store in the user context
   void calcPFMetricAll();
 
-  void calcPFMetricOneRB(int rbgid, int mute_cell);
+  void calcPFMetricOneRB(int rbgid, int mute_cell = -1);
 
   inline void allocateRBG(int rbg_id) { rbgs_allocated_.push_back(rbg_id); }
 
@@ -44,7 +47,9 @@ public:
   inline int getUserID() { return ue_id_; }
 
   // get the user metric of this rbg(without compute)
-  inline double getRankingMetric(int rbg_id) { return sched_metrics_[rbg_id]; }
+  inline double getRankingMetric(int rbg_id, int mute_cell = -1) {
+    return sched_metrics_[mute_cell + 1][rbg_id];
+  }
 };
 
 #endif

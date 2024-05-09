@@ -6,6 +6,7 @@ project(radiosaber VERSION 1.0)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+include_directories(/usr/local/boost_1_82_0)
 # add the util library
 add_subdirectory(util)
 
@@ -14,7 +15,7 @@ add_executable(test_util test_util.cpp)
 add_executable(radiosaber main.cpp)
 
 # add the flags
-set(DEBUGFLAGS "-Wall -g -O2 -pthread")
+set(DEBUGFLAGS "-Wall -g -O2 -pthread -DDEBUG_LOG")
 set(RELEASEFLAGS "-O3 -Wall -g")
 
 target_link_libraries(test_util PUBLIC util)
